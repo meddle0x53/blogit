@@ -42,7 +42,11 @@ defmodule Blogit.Worker do
   end
 
   def handle_call(:list_posts, _from, state = %{posts: posts}) do
-    {:reply, Map.values(posts), state}
+    result = Map.values(posts) |> Enum.sort(fn (post1, post2) ->
+      post1.created_at > post2.created_at
+    end)
+
+    {:reply, result, state}
   end
 
   def handle_call({:post_by_name, name}, _from, state = %{posts: posts}) do

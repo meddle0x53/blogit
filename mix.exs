@@ -11,15 +11,14 @@ defmodule Blogit.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :timex],
+    [applications: [:logger],
      mod: {Blogit, []}]
   end
 
   defp deps do
     [
       {:git_cli, "~> 0.2"},
-      {:earmark, "~> 1.0.3"},
-      {:timex, "~> 3.1.7"}
+      {:earmark, "~> 1.0.3"}
     ]
   end
 end

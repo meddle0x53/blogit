@@ -1,6 +1,4 @@
 defmodule Blogit.Post do
-  use Timex
-
   alias Blogit.GitRepository
 
   @enforce_keys [:name, :path, :raw, :html]
@@ -14,10 +12,8 @@ defmodule Blogit.Post do
     raw = File.read!(file)
     html = Earmark.to_html(raw)
 
-    created_at =
-      time_from_string(GitRepository.file_created_at(repository, file_name))
-    updated_at =
-      time_from_string(GitRepository.file_updated_at(repository, file_name))
+    created_at = GitRepository.file_created_at(repository, file_name)
+    updated_at = GitRepository.file_updated_at(repository, file_name)
 
     %__MODULE__{
       name: name, path: file, raw: raw, html: html,
@@ -45,6 +41,4 @@ defmodule Blogit.Post do
     |> Enum.filter(fn(f) -> String.ends_with?(f, ".md") end)
     |> name_from_file
   end
-
-  defp time_from_string(string), do: Timex.parse!(string, @time_format)
 end

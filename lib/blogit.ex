@@ -19,5 +19,4 @@ defmodule Blogit do
   def post_by_name(name) do
     GenServer.call(Blogit.Worker, {:post_by_name, name})
   end
-
 end

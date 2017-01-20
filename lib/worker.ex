@@ -23,7 +23,7 @@ defmodule Blogit.Worker do
     repository = GitRepository.updated_repository
     posts = Post.compile_posts(GitRepository.local_files, repository)
 
-    if @polling, do: check_after_interval(@poll_interval)
+    try_check_after_interval(@polling, @poll_interval)
     {:ok, %{repository: repository, posts: posts}}
   end
 
@@ -31,12 +31,12 @@ defmodule Blogit.Worker do
     repository = state[:repository]
     case GitRepository.fetch(repository) do
       {:no_updates} ->
-        if @polling, do: check_after_interval(@poll_interval)
+        try_check_after_interval(@polling, @poll_interval)
         {:noreply, state}
       {:updates, updates} ->
         posts = updated_posts(state[:posts], updates, repository)
 
-        if @polling, do: check_after_interval(@poll_interval)
+        try_check_after_interval(@polling, @poll_interval)
         {:noreply, %{state | posts: posts}}
     end
   end
@@ -60,9 +60,11 @@ defmodule Blogit.Worker do
   # Private #
   ###########
 
-  defp check_after_interval(interval) do
+  defp try_check_after_interval(true, interval) do
     Process.send_after(self, :check_updates, interval)
   end
+
+  defp try_check_after_interval(false, _), do: nil
 
   defp updated_posts(current_posts, updates, repository) do
     new_files = Enum.filter(updates, &GitRepository.file_in?/1)

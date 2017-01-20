@@ -7,6 +7,7 @@ defmodule Blogit.Mixfile do
      elixir: "~> 1.3",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
+     preferred_cli_env: [espec: :test],
      deps: deps()]
   end
 
@@ -18,7 +19,8 @@ defmodule Blogit.Mixfile do
   defp deps do
     [
       {:git_cli, "~> 0.2"},
-      {:earmark, "~> 1.0.3"}
+      {:earmark, "~> 1.0.3"},
+      {:espec, "~> 1.2.1", only: :test}
     ]
   end
 end

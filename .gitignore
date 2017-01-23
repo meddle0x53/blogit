@@ -16,3 +16,4 @@ erl_crash.dump
 *.ez
 elixir-blog
 data
+*.beam

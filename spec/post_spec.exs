@@ -17,7 +17,7 @@ defmodule PostSpec do
     end
 
     it "sets the title from the title of the markdown" do
-      path = Path.join("spec/data", "test_with_title.md")
+      path = Path.join("spec/data/posts", "test_with_title.md")
       expect Post.from_file_name("test_with_title.md", nil)
       |> to(eq %Post{
         name: "test_with_title", path: path, raw: File.read!(path),
@@ -29,7 +29,7 @@ defmodule PostSpec do
     end
 
     it "sets the title from name of the file when no title is contained" do
-      path = Path.join("spec/data", "test_with_no_title.md")
+      path = Path.join("spec/data/posts", "test_with_no_title.md")
       expect Post.from_file_name("test_with_no_title.md", nil)
       |> to(eq %Post{
         name: "test_with_no_title", path: path, raw: File.read!(path),

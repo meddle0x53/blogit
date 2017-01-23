@@ -3,6 +3,7 @@ defmodule Blogit.Post do
 
   @enforce_keys [:name, :path, :raw, :html]
   @time_format "{YYYY}-{M}-{D} {h24}:{m}:{s} {Z}"
+  @posts_folder Application.get_env(:blogit, :posts_folder, "/")
 
   defstruct [
     :name, :path, :raw, :html, :created_at, :updated_at, :author, :title
@@ -10,7 +11,9 @@ defmodule Blogit.Post do
 
   def from_file_name(file_name, repository) do
     name = name_from_file(file_name)
-    file = Path.join(GitRepository.local_path, file_name)
+    file = GitRepository.local_path
+           |> Path.join(@posts_folder) |> Path.join(file_name)
+
     raw = File.read!(file)
     html = Earmark.to_html(String.replace(raw, ~r/^\s*\#\s*.+/, ""))
 

@@ -12,11 +12,11 @@ defmodule Blogit do
     Supervisor.start_link(children, opts)
   end
 
-  def list_posts do
-    GenServer.call(Blogit.Worker, :list_posts)
-  end
+  def list_posts, do: GenServer.call(Blogit.Worker, :list_posts)
 
   def post_by_name(name) do
     GenServer.call(Blogit.Worker, {:post_by_name, name})
   end
+
+  def configuration, do: GenServer.call(Blogit.Worker, :blog_configuration)
 end

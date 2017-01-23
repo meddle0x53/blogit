@@ -12,7 +12,7 @@ defmodule Blogit.Mixfile do
   end
 
   def application do
-    [applications: [:logger],
+    [applications: [:logger, :yaml_elixir],
      mod: {Blogit, []}]
   end
 
@@ -20,6 +20,7 @@ defmodule Blogit.Mixfile do
     [
       {:git_cli, "~> 0.2"},
       {:earmark, "~> 1.0.3"},
+      {:yaml_elixir, "~> 1.3.0"},
       {:espec, "~> 1.2.1", only: :test}
     ]
   end

@@ -2,7 +2,7 @@ defmodule Blogit.Worker do
   use GenServer
 
   alias Blogit.Post
-  alias Blogit.Blog
+  alias Blogit.Configuration
   alias Blogit.GitRepository
 
   @polling Application.get_env(:blogit, :polling, true)
@@ -23,7 +23,7 @@ defmodule Blogit.Worker do
   def init(_) do
     repository = GitRepository.updated_repository
     posts = Post.compile_posts(GitRepository.local_files, repository)
-    blog = Blog.from_configuration
+    blog = Configuration.from_file
 
     try_check_after_interval(@polling, @poll_interval)
     {:ok, %{repository: repository, posts: posts, blog: blog}}
@@ -38,7 +38,7 @@ defmodule Blogit.Worker do
       {:updates, updates} ->
         posts = updated_posts(state[:posts], updates, repository)
         blog = updated_blog_configuration(
-          state[:blog], Blog.configuration_updated?(updates)
+          state[:blog], Configuration.updated?(updates)
         )
 
         try_check_after_interval(@polling, @poll_interval)
@@ -75,7 +75,7 @@ defmodule Blogit.Worker do
 
   defp try_check_after_interval(false, _), do: nil
 
-  defp updated_blog_configuration(_, true), do: Blog.from_configuration
+  defp updated_blog_configuration(_, true), do: Configuration.from_file
   defp updated_blog_configuration(current, false), do: current
 
   defp updated_posts(current_posts, updates, repository) do

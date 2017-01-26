@@ -1,15 +1,15 @@
-defmodule BlogSpec do
+defmodule ConfigurationSpec do
   use ESpec
-  alias Blogit.Blog
+  alias Blogit.Configuration
 
-  describe "from_configuration" do
+  describe "from_file" do
     before do
       allow(Blogit.GitRepository).to accept(:local_path, fn -> "spec/data" end)
     end
 
     it "creates the structure with defaults if configuration does not exist" do
-      expect Blog.from_configuration
-      |> to(eq %Blog{
+      expect Configuration.from_file
+      |> to(eq %Configuration{
         title: "Data", logo_path: nil, sub_title: nil
       })
     end
@@ -19,8 +19,8 @@ defmodule BlogSpec do
             "spec/data/broken_configuration.yml"
       end)
 
-      expect Blog.from_configuration
-      |> to(eq %Blog{
+      expect Configuration.from_file
+      |> to(eq %Configuration{
         title: "Data", logo_path: nil, sub_title: nil
       })
     end
@@ -30,8 +30,8 @@ defmodule BlogSpec do
             "spec/data/some.yml"
       end)
 
-      expect Blog.from_configuration
-      |> to(eq %Blog{
+      expect Configuration.from_file
+      |> to(eq %Configuration{
         title: "My Blog", logo_path: nil, sub_title: "Tadaaa"
       })
     end

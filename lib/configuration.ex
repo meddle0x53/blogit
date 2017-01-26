@@ -1,4 +1,4 @@
-defmodule Blogit.Blog do
+defmodule Blogit.Configuration do
   alias Blogit.GitRepository
 
   defstruct [:title, :logo_path, :sub_title]
@@ -7,12 +7,12 @@ defmodule Blogit.Blog do
                         :blogit, :configuration_file, "blog.yml"
                       )
 
-  def from_configuration do
+  def from_file do
     path = Path.join(GitRepository.local_path, @configuration_file)
     from_path(File.read(path))
   end
 
-  def configuration_updated?(updates) do
+  def updated?(updates) do
     Enum.member?(updates, @configuration_file)
   end
 

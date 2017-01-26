@@ -5,7 +5,8 @@ defmodule Blogit.Meta do
   @meta_divider Application.get_env(:blogit, :meta_divider, "<><><><><><><><>")
 
   defstruct [
-    :created_at, :updated_at, :author, :title, :category, :tags, :published
+    :created_at, :updated_at, :author, :title, :category, :tags, :published,
+    :title_image_path
   ]
 
   def from_file_name(file_name, repository, raw, name) do
@@ -64,7 +65,8 @@ defmodule Blogit.Meta do
       title: data["title"] || retrieve_title(raw, name),
       tags: Map.get(data, "tags", []),
       published: Map.get(data, "published", true),
-      category: data["category"]
+      category: data["category"],
+      title_image_path: data["title_image_path"]
     }
   end
 

@@ -57,7 +57,7 @@ defmodule PostSpec do
           updated_at: "2016-03-03 23:21:11 +02:00",
           created_at: "2015-03-03 23:21:11 +02:00", author: "Elixir",
           title: "Custom Title", published: false, category: "dummy",
-          tags: ~w(lame test stuff)
+          tags: ~w(lame test stuff), title_image_path: "some.jpg"
         }
       })
     end
@@ -78,7 +78,7 @@ defmodule PostSpec do
           created_at: "2017-01-20 8:35:21 +02:00", author: "Whiterun",
           title: "This title should be extracted as title of the post",
           published: false, category: "games",
-          tags: []
+          tags: [], title_image_path: "mine.jpg"
         }
       })
     end

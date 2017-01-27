@@ -38,7 +38,7 @@ defmodule Blogit.GitRepository do
   def log(repository, args), do: Git.log!(repository, args)
 
   def file_author(repository, file_name) do
-    first_in_log(repository, ["--reverse", "--format=%an <%ae>", file_name])
+    first_in_log(repository, ["--reverse", "--format=%an", file_name])
   end
 
   def file_created_at(repository, file_name) do

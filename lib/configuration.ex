@@ -1,7 +1,7 @@
 defmodule Blogit.Configuration do
   alias Blogit.GitRepository
 
-  defstruct [:title, :logo_path, :sub_title]
+  defstruct [:title, :logo_path, :sub_title, :background_image_path]
 
   @configuration_file Application.get_env(
                         :blogit, :configuration_file, "blog.yml"
@@ -32,14 +32,18 @@ defmodule Blogit.Configuration do
     %__MODULE__{
       title: data["title"] || default_title,
       logo_path: data["logo_path"] || nil,
-      sub_title: data["sub_title"] || nil
+      sub_title: data["sub_title"] || nil,
+      background_image_path: data["background_image_path"] || nil
     }
   end
 
   defp from_yml(_), do: from_defaults
 
   defp from_defaults do
-    %__MODULE__{ title: default_title, logo_path: nil, sub_title: nil }
+    %__MODULE__{
+      title: default_title, logo_path: nil, sub_title: nil,
+      background_image_path: nil
+    }
   end
 
   defp default_title do

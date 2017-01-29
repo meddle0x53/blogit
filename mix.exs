@@ -8,6 +8,11 @@ defmodule Blogit.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      preferred_cli_env: [espec: :test],
+     description: """
+       Blogit is an OTP application for generating blog posts from a git
+       repository containing markdown files.
+     """,
+     package: package(),
      deps: deps()]
   end
 
@@ -23,5 +28,13 @@ defmodule Blogit.Mixfile do
       {:yaml_elixir, "~> 1.3.0"},
       {:espec, "~> 1.2.1", only: :test}
     ]
+  end
+
+  defp package do
+    %{
+      licenses: ["MIT"],
+      maintainers: ["Nikolay Tsvetinov (Meddle)"],
+      links: [%{"GitHub" => "https://github.com/meddle0x53/blogit"}]
+    }
   end
 end

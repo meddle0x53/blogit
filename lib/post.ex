@@ -3,7 +3,7 @@ defmodule Blogit.Post do
 
   @enforce_keys [:name, :path, :raw, :html, :meta]
   @time_format "{YYYY}-{M}-{D} {h24}:{m}:{s} {Z}"
-  @posts_folder Application.get_env(:blogit, :posts_folder, "/")
+  @posts_folder Application.get_env(:blogit, :posts_folder, "")
   @meta_divider Application.get_env(:blogit, :meta_divider, "<><><><><><><><>")
 
   defstruct [
@@ -30,7 +30,7 @@ defmodule Blogit.Post do
     list
     |> Enum.filter(fn(f) -> String.ends_with?(f, ".md") end)
     |> Enum.map(fn(file) ->
-        from_file_name(file, repository)
+        __MODULE__.from_file_name(file, repository)
       end)
     |> Enum.map(fn(post) -> {String.to_atom(post.name), post} end)
     |> Enum.into(%{})
@@ -43,6 +43,6 @@ defmodule Blogit.Post do
   def names_from_files(files) do
     files
     |> Enum.filter(fn(f) -> String.ends_with?(f, ".md") end)
-    |> name_from_file
+    |> Enum.map(&__MODULE__.name_from_file/1)
   end
 end

@@ -1,7 +1,7 @@
 defmodule Blogit.Meta do
   alias Blogit.GitRepository
 
-  @posts_folder Application.get_env(:blogit, :posts_folder, "/")
+  @posts_folder Application.get_env(:blogit, :posts_folder, "")
   @meta_divider Application.get_env(:blogit, :meta_divider, "<><><><><><><><>")
 
   defstruct [
@@ -18,6 +18,8 @@ defmodule Blogit.Meta do
 
     create_meta(File.read(meta_path), file_name, repository, raw, name)
   end
+
+  def folder, do: Path.join(@posts_folder, "meta") |> String.trim_leading("/")
 
   defp create_meta({:error, _}, file_name, repository, raw, name) do
     create_from_map(

@@ -83,4 +83,29 @@ defmodule PostSpec do
       })
     end
   end
+
+  describe "compile_posts" do
+    before do
+      allow(Post).to accept(:from_file_name, fn (name, _) ->
+        %Post{name: name, path: name, raw: nil, html: nil, meta: nil}
+      end)
+    end
+
+    it "compiles only *.md files in a map with keys the names of the posts" do
+      files = ~w(post1.md post2.md some.txt other.json post3.md)
+
+      expect Post.compile_posts(files, nil)
+      |> to(eq %{
+        "post1.md": %Blogit.Post{
+          html: nil, meta: nil, name: "post1.md", path: "post1.md", raw: nil
+        },
+        "post2.md": %Blogit.Post{
+          html: nil, meta: nil, name: "post2.md", path: "post2.md", raw: nil
+        },
+        "post3.md": %Blogit.Post{
+          html: nil, meta: nil, name: "post3.md", path: "post3.md", raw: nil
+        }
+      })
+    end
+  end
 end

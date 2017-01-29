@@ -37,6 +37,7 @@ defmodule Blogit.Worker do
         {:noreply, state}
       {:updates, updates} ->
         posts = updated_posts(state[:posts], updates, repository)
+        posts = updated_posts_by_meta(posts, updates, repository)
         blog = updated_blog_configuration(
           state[:blog], Configuration.updated?(updates)
         )
@@ -85,5 +86,15 @@ defmodule Blogit.Worker do
     current_posts
     |> Map.merge(Post.compile_posts(new_files, repository))
     |> Map.drop(deleted_posts)
+  end
+
+  defp updated_posts_by_meta(current_posts, updates, repository) do
+    files = updates |> Enum.filter(fn (f) ->
+      String.starts_with?(f, Blogit.Meta.folder) && String.ends_with?(f, ".yml")
+    end) |> Enum.map(fn (f) ->
+      f |> String.replace("meta/", "") |> String.replace_suffix("yml", "md")
+    end)
+
+    Map.merge(current_posts, Post.compile_posts(files, repository))
   end
 end

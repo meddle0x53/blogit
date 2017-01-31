@@ -49,7 +49,7 @@ defmodule Blogit.Meta do
   end
 
   defp merge_meta(current, inline) when is_map(inline) do
-    Map.merge(inline, current)
+    Map.merge(current, inline)
   end
 
   defp merge_meta(current, _), do: current
@@ -65,7 +65,7 @@ defmodule Blogit.Meta do
       author: data["author"] ||
         GitRepository.file_author(repository, file_name),
       title: data["title"] || retrieve_title(raw, name),
-      tags: Map.get(data, "tags", []),
+      tags: Map.get(data, "tags", []) |> Enum.map(&Kernel.to_string/1),
       published: Map.get(data, "published", true),
       category: data["category"],
       title_image_path: data["title_image_path"]

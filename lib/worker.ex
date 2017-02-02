@@ -4,6 +4,7 @@ defmodule Blogit.Worker do
   alias Blogit.Post
   alias Blogit.Configuration
   alias Blogit.GitRepository
+  alias Blogit.Search
 
   @polling Application.get_env(:blogit, :polling, true)
   @poll_interval Application.get_env(:blogit, :poll_interval, 10_000)
@@ -26,7 +27,8 @@ defmodule Blogit.Worker do
     blog = Configuration.from_file
 
     try_check_after_interval(@polling, @poll_interval)
-    {:ok, %{repository: repository, posts: posts, blog: blog}}
+    {:ok, %{
+      repository: repository, posts: posts, blog: blog, posts_by_dates: nil}}
   end
 
   def handle_info(:check_updates, state) do
@@ -43,14 +45,27 @@ defmodule Blogit.Worker do
         )
 
         try_check_after_interval(@polling, @poll_interval)
-        {:noreply, %{state | posts: posts, blog: blog}}
+        {:noreply, %{
+          state | posts: posts, blog: blog, posts_by_dates: nil}}
     end
   end
 
   def handle_call(:list_posts, _from, state = %{posts: posts}) do
-    result = Map.values(posts) |> Enum.sort(fn (post1, post2) ->
-      post1.meta.created_at > post2.meta.created_at
-    end)
+    result = Map.values(posts) |> Post.sorted
+
+    {:reply, result, state}
+  end
+
+  def handle_call(:posts_by_dates, _from, state = %{
+    posts_by_dates: posts_by_dates, posts: posts
+  }) do
+    result = posts_by_dates ||
+      Post.collect_by_year_and_month(Map.values(posts) |> Post.reverse)
+    {:reply, result, %{state | posts_by_dates: posts_by_dates}}
+  end
+
+  def handle_call({:search_posts, query}, _from, state = %{posts: posts}) do
+    result = Map.values(posts) |> Search.search_posts(query)
 
     {:reply, result, state}
   end
@@ -71,7 +86,7 @@ defmodule Blogit.Worker do
   ###########
 
   defp try_check_after_interval(true, interval) do
-    Process.send_after(self, :check_updates, interval)
+    Process.send_after(self(), :check_updates, interval)
   end
 
   defp try_check_after_interval(false, _), do: nil

@@ -1,7 +1,7 @@
 defmodule Blogit.Meta do
   alias Blogit.GitRepository
 
-  @posts_folder Application.get_env(:blogit, :posts_folder, "")
+  @posts_folder Application.get_env(:blogit, :posts_folder, ".")
   @meta_divider Application.get_env(:blogit, :meta_divider, "<><><><><><><><>")
 
   defstruct [
@@ -57,13 +57,20 @@ defmodule Blogit.Meta do
   defp create_from_map(
     data, file_name, repository, raw, name
   ) when is_map(data) do
+    created_at = data["created_at"] || GitRepository.file_created_at(
+      repository, Path.join(@posts_folder, file_name)
+    )
+    updated_at = data["updated_at"] || GitRepository.file_updated_at(
+      repository, Path.join(@posts_folder, file_name)
+    )
+    author = data["author"] || GitRepository.file_author(
+      repository, Path.join(@posts_folder, file_name)
+    )
+    {:ok, created_at, _} = Calendar.NaiveDateTime.Parse.iso8601(created_at)
+    {:ok, updated_at, _} = Calendar.NaiveDateTime.Parse.iso8601(updated_at)
+
     %__MODULE__{
-      created_at: data["created_at"] ||
-        GitRepository.file_created_at(repository, file_name),
-      updated_at: data["updated_at"] ||
-        GitRepository.file_updated_at(repository, file_name),
-      author: data["author"] ||
-        GitRepository.file_author(repository, file_name),
+      created_at: created_at, updated_at: updated_at, author: author,
       title: data["title"] || retrieve_title(raw, name),
       tags: Map.get(data, "tags", []) |> Enum.map(&Kernel.to_string/1),
       published: Map.get(data, "published", true),

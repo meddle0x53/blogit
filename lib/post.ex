@@ -2,7 +2,6 @@ defmodule Blogit.Post do
   alias Blogit.GitRepository
 
   @enforce_keys [:name, :path, :raw, :html, :meta]
-  @time_format "{YYYY}-{M}-{D} {h24}:{m}:{s} {Z}"
   @posts_folder Application.get_env(:blogit, :posts_folder, "")
   @meta_divider Application.get_env(:blogit, :meta_divider, "<><><><><><><><>")
 
@@ -44,5 +43,34 @@ defmodule Blogit.Post do
     files
     |> Enum.filter(fn(f) -> String.ends_with?(f, ".md") end)
     |> Enum.map(&__MODULE__.name_from_file/1)
+  end
+
+  def sorted(posts) do
+    Enum.sort(posts, fn (post1, post2) ->
+      Calendar.NaiveDateTime.before?(
+        post2.meta.created_at, post1.meta.created_at
+      )
+    end)
+  end
+
+  def reverse(posts) do
+    Enum.sort(posts, fn (post1, post2) ->
+      Calendar.NaiveDateTime.before?(
+        post1.meta.created_at, post2.meta.created_at
+      )
+    end)
+  end
+
+  def collect_by_year_and_month(posts) do
+    posts |> Enum.reduce(%{}, fn post, map ->
+      year = post.meta.created_at.year
+      month = post.meta.created_at.month
+
+      month_map = Map.get(map, year, %{})
+      month_array = Map.get(month_map, month, [])
+      month_map = Map.merge(month_map, %{month => [post | month_array]})
+
+      Map.merge(map, %{year => month_map})
+    end)
   end
 end

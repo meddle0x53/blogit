@@ -4,6 +4,7 @@ defmodule Blogit.GitRepository do
               |> String.split("/")
               |> List.last
               |> String.trim_trailing(".git")
+  @posts_folder Application.get_env(:blogit, :posts_folder, ".")
 
   def repository do
     case Git.clone(@repository_url) do
@@ -13,10 +14,15 @@ defmodule Blogit.GitRepository do
   end
 
   def updated_repository do
-    repo = repository
-    Git.pull!(repo)
+    case Mix.env do
+      :test ->
+        %Git.Repository{path: "data"}
+      _ ->
+        repo = repository()
+        Git.pull!(repo)
 
-    repo
+        repo
+    end
   end
 
   def fetch(repo) do
@@ -33,7 +39,7 @@ defmodule Blogit.GitRepository do
   end
 
   def local_path, do: @local_path
-  def local_files, do: File.ls!(@local_path)
+  def local_files, do: File.ls!(Path.join(@local_path, @posts_folder))
   def file_in?(file), do: File.exists?(Path.join(@local_path, file))
   def log(repository, args), do: Git.log!(repository, args)
 

@@ -5,6 +5,7 @@ defmodule Blogit.GitRepository do
               |> List.last
               |> String.trim_trailing(".git")
   @posts_folder Application.get_env(:blogit, :posts_folder, ".")
+  @mode Application.get_env(:blogit, :mode, :dev)
 
   def repository do
     case Git.clone(@repository_url) do
@@ -14,7 +15,7 @@ defmodule Blogit.GitRepository do
   end
 
   def updated_repository do
-    case Mix.env do
+    case @mode do
       :test ->
         %Git.Repository{path: "data"}
       _ ->

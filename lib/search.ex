@@ -1,6 +1,56 @@
 defmodule Blogit.Search do
   alias Blogit.Post
 
+  @supported_params ~w(author category tags year month q)
+
+  def filter_by_params(posts, params) do
+    filters = Map.take(params, @supported_params)
+    filters = for {key, val} <- filters, into: %{} do
+      {String.to_atom(key), val}
+    end
+
+    filters = filter_category(filters)
+    tagless_filters = Map.delete filters, :tags
+
+    filter_tags(
+      filters, all_by(posts, tagless_filters, [:meta])
+    )
+  end
+
+  defp all_by(posts, params, deep) do
+    Enum.filter posts, fn entry ->
+      Enum.all?(params, fn {key, val} ->
+        data = Enum.reduce(deep, entry, fn (current, acc) ->
+          Map.fetch!(acc, current)
+        end)
+        Map.get(data, key) == val
+      end)
+    end
+  end
+
+  defp filter_category(filters = %{category: "uncategorized"}) do
+    %{filters | category: nil}
+  end
+  defp filter_category(filters), do: filters
+
+  defp filter_tags(%{tags: tags}, posts) do
+    cond do
+      String.match?(tags, ~r/^\w+\s*(,\s*\w+\s*)*$/) ->
+        filter_by_tags(tags, posts)
+      true -> posts
+    end
+  end
+
+  defp filter_tags(_, posts), do: posts
+
+  defp filter_by_tags(tags, posts) do
+    tag_set = tags |> String.split(",", trim: true) |> Enum.into(MapSet.new)
+
+    Enum.filter(posts, fn (post) ->
+      MapSet.subset?(tag_set, post.meta.tags |> Enum.into(MapSet.new))
+    end)
+  end
+
   def search_posts(posts, query) do
     queries = query_to_list(query)
 

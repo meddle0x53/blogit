@@ -15,4 +15,13 @@ defmodule BlogitSpec do
       ])
     end
   end
+
+  describe "filter_posts" do
+    it "filters using the params given the list of posts" do
+      params = %{"tags" => "one", "category" => "one", "author" => "Misho"}
+      expect Blogit.filter_posts(params)
+      |> Enum.map(fn(post)-> post.name end)
+      |> to(eq ~w(post7))
+    end
+  end
 end

@@ -15,7 +15,8 @@ defmodule PostSpec do
         meta: %Meta{
           updated_at: ~N[2017-01-23 13:17:35],
           created_at: ~N[2017-01-23 13:17:35], author: "meddle",
-          title: "My Special title", category: nil, tags: [], published: true
+          title: "My Special title", category: nil, tags: [], published: true,
+          year: "2017", month: "1"
         }
       })
     end
@@ -27,7 +28,7 @@ defmodule PostSpec do
         name: "test_with_no_title", path: path, raw: File.read!(path),
         html: Earmark.to_html(File.read!(path)),
         meta: %Meta{
-          updated_at: ~N[2017-01-23 13:17:35],
+          updated_at: ~N[2017-01-23 13:17:35], year: "2017", month: "1",
           created_at: ~N[2017-01-23 13:17:35], author: "meddle",
           title: "Test With No Title", category: nil, tags: [], published: true
         }
@@ -46,7 +47,8 @@ defmodule PostSpec do
           updated_at: ~N[2016-03-03 23:21:11],
           created_at: ~N[2015-03-03 23:21:11], author: "Elixir",
           title: "Custom Title", published: false, category: "dummy",
-          tags: ~w(lame test stuff), title_image_path: "some.jpg"
+          tags: ~w(lame test stuff), title_image_path: "some.jpg",
+          year: "2015", month: "3"
         }
       })
     end
@@ -66,7 +68,7 @@ defmodule PostSpec do
           updated_at: ~N[2017-02-02 15:05:15],
           created_at: ~N[2017-02-02 15:05:15], author: "Whiterun",
           title: "This title should be extracted as title of the post",
-          published: false, category: "games",
+          published: false, category: "games", year: "2017", month: "2",
           tags: [], title_image_path: "mine.jpg"
         }
       })

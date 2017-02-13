@@ -18,7 +18,7 @@ defmodule Blogit do
 
   def posts_by_dates, do: GenServer.call(Worker, :posts_by_dates)
 
-  def search_posts(query), do: GenServer.call(Worker, {:search_posts, query})
+  def filter_posts(params), do: GenServer.call(Worker, {:filter_posts, params})
 
   def post_by_name(name), do: GenServer.call(Worker, {:post_by_name, name})
 

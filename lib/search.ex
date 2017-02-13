@@ -11,10 +11,11 @@ defmodule Blogit.Search do
 
     filters = filter_category(filters)
     tagless_filters = Map.delete filters, :tags
+    no_search_filters = Map.delete tagless_filters, :q
 
-    filter_tags(
-      filters, all_by(posts, tagless_filters, [:meta])
-    )
+    all_by(posts, no_search_filters, [:meta])
+    |> filter_tags(filters)
+    |> filter_search(filters)
   end
 
   defp all_by(posts, params, deep) do
@@ -33,7 +34,7 @@ defmodule Blogit.Search do
   end
   defp filter_category(filters), do: filters
 
-  defp filter_tags(%{tags: tags}, posts) do
+  defp filter_tags(posts, %{tags: tags}) do
     cond do
       String.match?(tags, ~r/^\w+\s*(,\s*\w+\s*)*$/) ->
         filter_by_tags(tags, posts)
@@ -41,7 +42,10 @@ defmodule Blogit.Search do
     end
   end
 
-  defp filter_tags(_, posts), do: posts
+  defp filter_tags(posts, _), do: posts
+
+  defp filter_search(posts, %{q: query}), do: search_posts(posts, query)
+  defp filter_search(posts, _), do: posts
 
   defp filter_by_tags(tags, posts) do
     tag_set = tags |> String.split(",", trim: true) |> Enum.into(MapSet.new)

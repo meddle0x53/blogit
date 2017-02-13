@@ -64,8 +64,8 @@ defmodule Blogit.Worker do
     {:reply, result, %{state | posts_by_dates: posts_by_dates}}
   end
 
-  def handle_call({:search_posts, query}, _from, state = %{posts: posts}) do
-    result = Map.values(posts) |> Search.search_posts(query)
+  def handle_call({:filter_posts, filters}, _from, state = %{posts: posts}) do
+    result = Map.values(posts) |> Search.filter_by_params(filters)
 
     {:reply, result, state}
   end

@@ -1,3 +1,0 @@
-Wow!
-
-Some other text

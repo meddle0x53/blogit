@@ -23,5 +23,12 @@ defmodule BlogitSpec do
       |> Enum.map(fn(post)-> post.name end)
       |> to(eq ~w(post7))
     end
+
+    it "returns posts sorted by the creation date" do
+      params = %{"tags" => "one"}
+      expect Blogit.filter_posts(params)
+      |> Enum.map(fn(post)-> post.name end)
+      |> to(eq ~w(post6 post7 post2 post3 post1))
+    end
   end
 end

@@ -32,22 +32,21 @@ defmodule Blogit.Worker do
   end
 
   def handle_info(:check_updates, state) do
-    repository = state[:repository]
-    case GitRepository.fetch(repository) do
-      {:no_updates} ->
-        try_check_after_interval(@polling, @poll_interval)
-        {:noreply, state}
-      {:updates, updates} ->
-        posts = updated_posts(state[:posts], updates, repository)
-        posts = updated_posts_by_meta(posts, updates, repository)
-        blog = updated_blog_configuration(
-          state[:blog], Configuration.updated?(updates)
-        )
+    Task.Supervisor.async_nolink(
+      :tasks_supervisor, Blogit.Updater, :check_updates, [state]
+    )
+    {:noreply, state}
+  end
 
-        try_check_after_interval(@polling, @poll_interval)
-        {:noreply, %{
-          state | posts: posts, blog: blog, posts_by_dates: nil}}
-    end
+  def handle_info({_, :no_updates}, state), do: {:noreply, state}
+
+  def handle_info({_, {:updates, %{posts: posts, blog: blog}}}, state) do
+    {:noreply, %{state | posts: posts, blog: blog, posts_by_dates: nil}}
+  end
+
+  def handle_info({:DOWN, _, :process, _, :normal}, state) do
+    try_check_after_interval(@polling, @poll_interval)
+    {:noreply, state}
   end
 
   def handle_call(:list_posts, _from, state = %{posts: posts}) do
@@ -65,7 +64,8 @@ defmodule Blogit.Worker do
   end
 
   def handle_call({:filter_posts, filters}, _from, state = %{posts: posts}) do
-    result = Map.values(posts) |> Search.filter_by_params(filters)
+    result =
+      Map.values(posts) |> Search.filter_by_params(filters) |> Post.sorted
 
     {:reply, result, state}
   end
@@ -85,31 +85,8 @@ defmodule Blogit.Worker do
   # Private #
   ###########
 
+  defp try_check_after_interval(false, _), do: nil
   defp try_check_after_interval(true, interval) do
     Process.send_after(self(), :check_updates, interval)
-  end
-
-  defp try_check_after_interval(false, _), do: nil
-
-  defp updated_blog_configuration(_, true), do: Configuration.from_file
-  defp updated_blog_configuration(current, false), do: current
-
-  defp updated_posts(current_posts, updates, repository) do
-    new_files = Enum.filter(updates, &GitRepository.file_in?/1)
-    deleted_posts = (updates -- new_files)
-                    |> Post.names_from_files |> Enum.map(&String.to_atom/1)
-    current_posts
-    |> Map.merge(Post.compile_posts(new_files, repository))
-    |> Map.drop(deleted_posts)
-  end
-
-  defp updated_posts_by_meta(current_posts, updates, repository) do
-    files = updates |> Enum.filter(fn (f) ->
-      String.starts_with?(f, Blogit.Meta.folder) && String.ends_with?(f, ".yml")
-    end) |> Enum.map(fn (f) ->
-      f |> String.replace("meta/", "") |> String.replace_suffix("yml", "md")
-    end)
-
-    Map.merge(current_posts, Post.compile_posts(files, repository))
   end
 end

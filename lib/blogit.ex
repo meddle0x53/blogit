@@ -8,6 +8,7 @@ defmodule Blogit do
 
     children = [
       worker(Worker, [Blogit.Worker]),
+      supervisor(Task.Supervisor, [[name: :tasks_supervisor]])
     ]
 
     opts = [strategy: :one_for_one, name: Blogit.Supervisor]

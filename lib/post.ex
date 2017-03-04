@@ -28,6 +28,8 @@ defmodule Blogit.Post do
   def compile_posts(list, repository) when is_list(list) do
     list
     |> Enum.filter(fn(f) -> String.ends_with?(f, ".md") end)
+    |> Enum.reject(fn(f) -> String.starts_with?(f, "slides/") end)
+    |> Enum.reject(fn(f) -> String.starts_with?(f, "pages/") end)
     |> Enum.map(fn(file) ->
         __MODULE__.from_file_name(file, repository)
       end)

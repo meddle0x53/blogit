@@ -15,11 +15,15 @@ defmodule Blogit do
     Supervisor.start_link(children, opts)
   end
 
-  def list_posts, do: GenServer.call(Worker, :list_posts)
+  def list_posts(from \\ 0, size \\ 5) do
+    GenServer.call(Worker, {:list_posts, from, size})
+  end
+
+  def filter_posts(params, from \\ 0, size \\ 5) do
+    GenServer.call(Worker, {:filter_posts, params, from, size})
+  end
 
   def posts_by_dates, do: GenServer.call(Worker, :posts_by_dates)
-
-  def filter_posts(params), do: GenServer.call(Worker, {:filter_posts, params})
 
   def post_by_name(name), do: GenServer.call(Worker, {:post_by_name, name})
 

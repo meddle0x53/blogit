@@ -49,8 +49,9 @@ defmodule Blogit.Worker do
     {:noreply, state}
   end
 
-  def handle_call(:list_posts, _from, state = %{posts: posts}) do
-    result = Map.values(posts) |> Post.sorted
+  def handle_call({:list_posts, from, size}, _from, state = %{posts: posts}) do
+    result = Map.values(posts)
+             |> Post.sorted |> Enum.drop(from) |> Enum.take(size)
 
     {:reply, result, state}
   end
@@ -63,9 +64,11 @@ defmodule Blogit.Worker do
     {:reply, result, %{state | posts_by_dates: posts_by_dates}}
   end
 
-  def handle_call({:filter_posts, filters}, _from, state = %{posts: posts}) do
-    result =
-      Map.values(posts) |> Search.filter_by_params(filters) |> Post.sorted
+  def handle_call(
+    {:filter_posts, filters, from, size}, _from, state = %{posts: posts}
+  ) do
+    result = Map.values(posts) |> Search.filter_by_params(filters)
+             |> Post.sorted |> Enum.drop(from) |> Enum.take(size)
 
     {:reply, result, state}
   end

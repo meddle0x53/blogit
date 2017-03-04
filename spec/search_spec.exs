@@ -2,7 +2,7 @@ defmodule SearchSpec do
   use ESpec
   alias Blogit.Search
 
-  let :posts, do: Blogit.list_posts
+  let :posts, do: Blogit.list_posts(0, 100)
 
   describe "filter_by_params" do
     it "can filter posts by author" do

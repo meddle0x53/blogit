@@ -3,7 +3,7 @@ defmodule BlogitSpec do
 
   describe "list_posts" do
     it "returns a list of all the posts, sorted by creation date" do
-      expect Blogit.list_posts()
+      expect Blogit.list_posts(0, 20)
       |> Enum.map(fn(post)-> post.meta.created_at end)
       |> to(eq [
         ~N[2017-02-02 17:02:12], ~N[2017-02-02 15:05:15],

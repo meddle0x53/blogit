@@ -32,7 +32,7 @@ defmodule Blogit.GitRepository do
       {:ok, _} ->
         updates =
           Git.diff!(repo, ["--name-only", "HEAD", "origin/master"])
-          |> String.split("\n", trim: true)
+          |> String.split("\n", trim: true) |> Enum.map(&String.trim/1)
         Git.pull!(repo)
 
         {:updates, updates}

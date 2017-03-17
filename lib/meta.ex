@@ -44,6 +44,7 @@ defmodule Blogit.Meta do
 
   defp merge_with_inline(data, raw, true) do
     [raw_meta | _] = String.split(raw, @meta_divider, trim: true)
+                     |> Enum.map(&String.trim/1)
 
     merge_meta(data, YamlElixir.read_from_string(raw_meta))
   end

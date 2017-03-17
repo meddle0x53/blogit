@@ -48,7 +48,10 @@ defmodule Blogit.Search do
   defp filter_search(posts, _), do: posts
 
   defp filter_by_tags(tags, posts) do
-    tag_set = tags |> String.split(",", trim: true) |> Enum.into(MapSet.new)
+    tag_set = tags
+              |> String.split(",", trim: true)
+              |> Enum.map(&String.trim/1)
+              |> Enum.into(MapSet.new)
 
     Enum.filter(posts, fn (post) ->
       MapSet.subset?(tag_set, post.meta.tags |> Enum.into(MapSet.new))

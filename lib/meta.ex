@@ -6,7 +6,7 @@ defmodule Blogit.Meta do
 
   defstruct [
     :created_at, :updated_at, :author, :title, :category, :tags, :published,
-    :title_image_path, :year, :month
+    :title_image_path, :year, :month, :pinned
   ]
 
   def from_file_name(file_name, repository, raw, name) do
@@ -77,7 +77,8 @@ defmodule Blogit.Meta do
       published: Map.get(data, "published", true),
       category: data["category"], year: Integer.to_string(created_at.year),
       month: Integer.to_string(created_at.month),
-      title_image_path: data["title_image_path"]
+      title_image_path: data["title_image_path"],
+      pinned: data["pinned"] || false
     }
   end
 

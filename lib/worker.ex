@@ -57,9 +57,9 @@ defmodule Blogit.Worker do
   end
 
   def handle_call(:list_pinned, _from, state = %{posts: posts}) do
-    result = Map.values(posts) |> Enum.map(fn post ->
-      {post.name, post.meta.title}
-    end)
+    result = Map.values(posts)
+             |> Enum.filter(fn post -> post.meta.pinned end)
+             |> Enum.map(fn post -> {post.name, post.meta.title} end)
 
     {:reply, result, state}
   end

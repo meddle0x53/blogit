@@ -22,7 +22,7 @@ defmodule Blogit do
   def list_pinned(), do: GenServer.call(Worker, :list_pinned)
 
   def filter_posts(params, from \\ 0, size \\ 5) do
-    GenServer.call(Worker, {:filter_posts, params})
+    GenServer.call(Worker, {:filter_posts, params, from, size})
   end
 
   def posts_by_dates, do: GenServer.call(Worker, :posts_by_dates)

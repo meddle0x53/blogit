@@ -44,7 +44,7 @@ defmodule Blogit.Worker do
     {:noreply, %{state | posts: posts, blog: blog, posts_by_dates: nil}}
   end
 
-  def handle_info({:DOWN, _, :process, _, :normal}, state) do
+  def handle_info({:DOWN, _, :process, _, _}, state) do
     try_check_after_interval(@polling, @poll_interval)
     {:noreply, state}
   end

@@ -59,6 +59,7 @@ defmodule Blogit.Worker do
   def handle_call(:list_pinned, _from, state = %{posts: posts}) do
     result = Map.values(posts)
              |> Enum.filter(fn post -> post.meta.pinned end)
+             |> Post.sorted_updated
              |> Enum.map(fn post -> {post.name, post.meta.title} end)
 
     {:reply, result, state}
@@ -68,7 +69,7 @@ defmodule Blogit.Worker do
     posts_by_dates: posts_by_dates, posts: posts
   }) do
     result = posts_by_dates ||
-      Post.collect_by_year_and_month(Map.values(posts) |> Post.reverse)
+      Post.collect_by_year_and_month(Map.values(posts))
     {:reply, result, %{state | posts_by_dates: posts_by_dates}}
   end
 

@@ -56,6 +56,14 @@ defmodule Blogit.Post do
     end)
   end
 
+  def sorted_updated(posts) do
+    Enum.sort(posts, fn (post1, post2) ->
+      Calendar.NaiveDateTime.before?(
+        post2.meta.updated_at, post1.meta.updated_at
+      )
+    end)
+  end
+
   def reverse(posts) do
     Enum.sort(posts, fn (post1, post2) ->
       Calendar.NaiveDateTime.before?(
@@ -65,15 +73,25 @@ defmodule Blogit.Post do
   end
 
   def collect_by_year_and_month(posts) do
-    posts |> Enum.reduce(%{}, fn post, map ->
+    posts
+    |> Enum.reduce(%{}, fn post, map ->
       year = post.meta.created_at.year
       month = post.meta.created_at.month
 
       month_map = Map.get(map, year, %{})
-      month_array = Map.get(month_map, month, [])
-      month_map = Map.merge(month_map, %{month => [post | month_array]})
+      month_count = Map.get(month_map, month, 0)
+      month_map = Map.merge(month_map, %{month => (month_count + 1)})
 
       Map.merge(map, %{year => month_map})
+    end) |> Map.to_list
+    |> Enum.flat_map(fn {year, dates} ->
+      Map.to_list(dates)
+      |> Enum.map(fn {month, count} -> {year, month, count}end)
+    end) |> Enum.sort(fn({year1, month1, _}, {year2, month2, _})->
+      cond do
+        year1 == year2 -> month2 <= month1
+        true -> year2 <= year1
+      end
     end)
   end
 end

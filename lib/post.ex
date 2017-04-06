@@ -18,7 +18,8 @@ defmodule Blogit.Post do
     data = String.split(raw, @meta_divider, trim: true)
            |> Enum.map(&String.trim/1)
 
-    html = Earmark.to_html(String.replace(List.last(data), ~r/^\s*\#\s*.+/, ""))
+    html =
+      Earmark.as_html!(String.replace(List.last(data), ~r/^\s*\#\s*.+/, ""))
 
     %__MODULE__{
       name: name, path: file, raw: raw, html: html,

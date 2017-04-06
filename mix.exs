@@ -3,7 +3,7 @@ defmodule Blogit.Mixfile do
 
   def project do
     [app: :blogit,
-     version: "0.7.1",
+     version: "0.7.3",
      elixir: "~> 1.4",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
@@ -25,10 +25,10 @@ defmodule Blogit.Mixfile do
   defp deps do
     [
       {:git_cli, "~> 0.2"},
-      {:earmark, "~> 1.0.3"},
+      {:earmark, "~> 1.1"},
       {:yaml_elixir, "~> 1.3.0"},
       {:calendar, "~> 0.16.1"},
-      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:ex_doc, ">= 0.15.0", only: :dev},
       {:espec, "~> 1.2.1", only: :test}
     ]
   end

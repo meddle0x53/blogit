@@ -1,11 +1,12 @@
-defmodule Blogit.GitRepository do
+defmodule Blogit.RepositoryProviders.Git do
+  @behaviour Blogit.RepositoryProvider
+
   @repository_url Application.get_env(:blogit, :repository_url)
   @local_path @repository_url
               |> String.split("/")
               |> List.last
               |> String.trim_trailing(".git")
   @posts_folder Application.get_env(:blogit, :posts_folder, ".")
-  @mode Application.get_env(:blogit, :mode, :dev)
 
   def repository do
     case Git.clone(@repository_url) do
@@ -15,15 +16,10 @@ defmodule Blogit.GitRepository do
   end
 
   def updated_repository do
-    case @mode do
-      :test ->
-        %Git.Repository{path: "data"}
-      _ ->
-        repo = repository()
-        Git.pull!(repo)
+    repo = repository()
+    Git.pull!(repo)
 
-        repo
-    end
+    repo
   end
 
   def fetch(repo) do
@@ -42,7 +38,6 @@ defmodule Blogit.GitRepository do
   def local_path, do: @local_path
   def local_files, do: File.ls!(Path.join(@local_path, @posts_folder))
   def file_in?(file), do: File.exists?(Path.join(@local_path, file))
-  def log(repository, args), do: Git.log!(repository, args)
 
   def file_author(repository, file_name) do
     first_in_log(repository, ["--reverse", "--format=%an", file_name])
@@ -55,6 +50,8 @@ defmodule Blogit.GitRepository do
   def file_updated_at(repository, file_name) do
     log(repository, ["-1", "--format=%ci", file_name]) |> String.trim
   end
+
+  defp log(repository, args), do: Git.log!(repository, args)
 
   defp first_in_log(repository, args) do
     log(repository, args) |> String.split("\n") |> List.first |> String.trim

@@ -1,6 +1,4 @@
-defmodule Blogit.Meta do
-  alias Blogit.GitRepository
-
+defmodule Blogit.Models.Post.Meta do
   @posts_folder Application.get_env(:blogit, :posts_folder, ".")
   @meta_divider Application.get_env(:blogit, :meta_divider, "<><><><><><><><>")
 
@@ -9,27 +7,30 @@ defmodule Blogit.Meta do
     :title_image_path, :year, :month, :pinned
   ]
 
-  def from_file_name(file_name, repository, raw, name) do
+  def from_file_name(repository_provider, file_name, repository, raw, name) do
     meta_file_name = file_name |> String.replace_suffix(".md", ".yml")
-    meta_path = GitRepository.local_path
+    meta_path = repository_provider.local_path
                 |> Path.join(@posts_folder)
                 |> Path.join("meta")
                 |> Path.join(meta_file_name)
 
-    create_meta(File.read(meta_path), file_name, repository, raw, name)
+    create_meta(
+      File.read(meta_path),
+      repository_provider, file_name, repository, raw, name
+    )
   end
 
   def folder, do: Path.join(@posts_folder, "meta") |> String.trim_leading("/")
 
-  defp create_meta({:error, _}, file_name, repository, raw, name) do
+  defp create_meta({:error, _}, rp, file_name, repository, raw, name) do
     create_from_map(
-      merge_with_inline(%{}, raw), file_name, repository, raw, name
+      merge_with_inline(%{}, raw), rp, file_name, repository, raw, name
     )
   end
 
-  defp create_meta({:ok, data}, file_name, repository, raw, name) do
+  defp create_meta({:ok, data}, rp, file_name, repository, raw, name) do
     meta = merge_with_inline(YamlElixir.read_from_string(data), raw)
-    create_from_map(meta, file_name, repository, raw, name)
+    create_from_map(meta, rp, file_name, repository, raw, name)
   end
 
   defp merge_with_inline(data, raw) when is_map(data) do
@@ -56,15 +57,15 @@ defmodule Blogit.Meta do
   defp merge_meta(current, _), do: current
 
   defp create_from_map(
-    data, file_name, repository, raw, name
+    data, rp, file_name, repository, raw, name
   ) when is_map(data) do
-    created_at = data["created_at"] || GitRepository.file_created_at(
+    created_at = data["created_at"] || rp.file_created_at(
       repository, Path.join(@posts_folder, file_name)
     )
-    updated_at = data["updated_at"] || GitRepository.file_updated_at(
+    updated_at = data["updated_at"] || rp.file_updated_at(
       repository, Path.join(@posts_folder, file_name)
     )
-    author = data["author"] || GitRepository.file_author(
+    author = data["author"] || rp.file_author(
       repository, Path.join(@posts_folder, file_name)
     )
     {:ok, created_at, _} = Calendar.NaiveDateTime.Parse.iso8601(created_at)
@@ -82,8 +83,8 @@ defmodule Blogit.Meta do
     }
   end
 
-  defp create_from_map(_, file_name, repository, raw, name) do
-    create_from_map(%{}, file_name, repository, raw, name)
+  defp create_from_map(_, rp, file_name, repository, raw, name) do
+    create_from_map(%{}, rp, file_name, repository, raw, name)
   end
 
   defp retrieve_title(raw, name) do

@@ -1,5 +1,5 @@
-defmodule Blogit.Search do
-  alias Blogit.Post
+defmodule Blogit.Models.Post.Search do
+  alias Blogit.Models.Post
 
   @supported_params ~w(author category tags year month q)
 

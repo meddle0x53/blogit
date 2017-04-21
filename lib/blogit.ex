@@ -1,33 +1,29 @@
 defmodule Blogit do
   use Application
 
-  alias Blogit.Worker
+  alias Blogit.Components.Posts
+  alias Blogit.Components.PostsByDate
+  alias Blogit.Components.Configuration
 
   def start(_type, _args) do
-    import Supervisor.Spec, warn: false
-
-    children = [
-      worker(Worker, [Blogit.Worker]),
-      supervisor(Task.Supervisor, [[name: :tasks_supervisor]])
-    ]
-
-    opts = [strategy: :one_for_one, name: Blogit.Supervisor]
-    Supervisor.start_link(children, opts)
+    Blogit.Supervisor.start_link(Blogit.RepositoryProviders.Git)
   end
 
   def list_posts(from \\ 0, size \\ 5) do
-    GenServer.call(Worker, {:list_posts, from, size})
+    GenServer.call(Posts, {:list, from, size})
   end
 
-  def list_pinned(), do: GenServer.call(Worker, :list_pinned)
+  def list_pinned(), do: GenServer.call(Posts, :list_pinned)
 
   def filter_posts(params, from \\ 0, size \\ 5) do
-    GenServer.call(Worker, {:filter_posts, params, from, size})
+    GenServer.call(Posts, {:filter, params, from, size})
   end
 
-  def posts_by_dates, do: GenServer.call(Worker, :posts_by_dates)
+  def posts_by_dates, do: GenServer.call(PostsByDate, :get)
 
-  def post_by_name(name), do: GenServer.call(Worker, {:post_by_name, name})
+  def post_by_name(name), do: GenServer.call(Posts, {:by_name, name})
 
-  def configuration, do: GenServer.call(Worker, :blog_configuration)
+  def configuration do
+    GenServer.call(Configuration, :get)
+  end
 end

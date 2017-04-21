@@ -1,17 +1,15 @@
-defmodule Blogit.Post do
-  alias Blogit.GitRepository
+defmodule Blogit.Models.Post do
+  alias Blogit.Models.Post.Meta
 
   @enforce_keys [:name, :path, :raw, :html, :meta]
   @posts_folder Application.get_env(:blogit, :posts_folder, "")
   @meta_divider Application.get_env(:blogit, :meta_divider, "<><><><><><><><>")
 
-  defstruct [
-    :name, :path, :raw, :html, :meta
-  ]
+  defstruct [:name, :path, :raw, :html, :meta]
 
-  def from_file_name(file_name, repository) do
+  def from_file_name(repository_provider, file_name, repository) do
     name = name_from_file(file_name)
-    file = GitRepository.local_path
+    file = repository_provider.local_path
            |> Path.join(@posts_folder) |> Path.join(file_name)
 
     raw = File.read!(file)
@@ -21,19 +19,19 @@ defmodule Blogit.Post do
     html =
       Earmark.as_html!(String.replace(List.last(data), ~r/^\s*\#\s*.+/, ""))
 
-    %__MODULE__{
-      name: name, path: file, raw: raw, html: html,
-      meta: Blogit.Meta.from_file_name(file_name, repository, raw, name)
-    }
+    meta =
+      Meta.from_file_name(repository_provider, file_name, repository, raw, name)
+
+    %__MODULE__{name: name, path: file, raw: raw, html: html, meta: meta}
   end
 
-  def compile_posts(list, repository) when is_list(list) do
+  def compile_posts(repository_provider, list, repository) when is_list(list) do
     list
     |> Enum.filter(fn(f) -> String.ends_with?(f, ".md") end)
     |> Enum.reject(fn(f) -> String.starts_with?(f, "slides/") end)
     |> Enum.reject(fn(f) -> String.starts_with?(f, "pages/") end)
     |> Enum.map(fn(file) ->
-        __MODULE__.from_file_name(file, repository)
+        __MODULE__.from_file_name(repository_provider, file, repository)
       end)
     |> Enum.map(fn(post) -> {String.to_atom(post.name), post} end)
     |> Enum.into(%{})

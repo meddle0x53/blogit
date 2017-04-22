@@ -7,6 +7,8 @@ defmodule Blogit.Server do
   alias Blogit.Components.Posts
   alias Blogit.Components.PostsByDate
 
+  alias Blogit.RepositoryProvider, as: Repository
+
   @polling Application.get_env(:blogit, :polling, true)
   @poll_interval Application.get_env(:blogit, :poll_interval, 10_000)
 
@@ -92,15 +94,14 @@ defmodule Blogit.Server do
   end
 
   defp init_state(sup, repository_provider) do
-    repository = repository_provider.updated_repository
+    repo = repository_provider.updated_repository
+    repository = %Repository{repo: repo, provider: repository_provider}
 
-    posts = Post.compile_posts(
-      repository_provider, repository_provider.local_files, repository
-    )
+    posts = Post.compile_posts(repository_provider.local_files, repository)
     configuration = Configuration.from_file(repository_provider)
 
     %__MODULE__{
-      repository: repository, posts: posts, configuration: configuration,
+      repository: repo, posts: posts, configuration: configuration,
       repository_provider: repository_provider, sup: sup
     }
   end

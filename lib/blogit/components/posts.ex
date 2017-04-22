@@ -36,7 +36,7 @@ defmodule Blogit.Components.Posts do
   def handle_call(:list_pinned, _from, posts) do
     result = Map.values(posts)
              |> Enum.filter(fn post -> post.meta.pinned end)
-             |> Post.sorted_updated
+             |> Post.sorted(:updated_at)
              |> Enum.map(fn post -> {post.name, post.meta.title} end)
 
     {:reply, result, posts}

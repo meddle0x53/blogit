@@ -1,5 +1,6 @@
 %{"calendar": {:hex, :calendar, "0.16.1", "782327ad8bae7c797b887840dc4ddb933f05ce6e333e5b04964d7a5d5f79bde3", [:mix], [{:tzdata, "~> 0.5.8 or ~> 0.1.201603", [hex: :tzdata, optional: false]}]},
   "certifi": {:hex, :certifi, "1.1.0", "c9b71a547016c2528a590ccfc28de786c7edb74aafa17446b84f54e04efc00ee", [:rebar3], []},
+  "dialyxir": {:hex, :dialyxir, "0.5.0", "5bc543f9c28ecd51b99cc1a685a3c2a1a93216990347f259406a910cf048d1d7", [:mix], []},
   "earmark": {:hex, :earmark, "1.2.0", "bf1ce17aea43ab62f6943b97bd6e3dc032ce45d4f787504e3adf738e54b42f3a", [:mix], []},
   "ex_doc": {:hex, :ex_doc, "0.15.1", "d5f9d588fd802152516fccfdb96d6073753f77314fcfee892b15b6724ca0d596", [:mix], [{:earmark, "~> 1.1", [hex: :earmark, optional: false]}]},
   "git_cli": {:hex, :git_cli, "0.2.3", "052f0ecfc43d86fb4a750741540bdb00ac63354c6588024555be62c8ea1eff33", [:mix], []},

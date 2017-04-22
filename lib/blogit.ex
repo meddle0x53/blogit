@@ -5,8 +5,12 @@ defmodule Blogit do
   alias Blogit.Components.PostsByDate
   alias Blogit.Components.Configuration
 
+  @repository_provider Application.get_env(
+    :blogit, :repository_provider, Blogit.RepositoryProviders.Git
+  )
+
   def start(_type, _args) do
-    Blogit.Supervisor.start_link(Blogit.RepositoryProviders.Git)
+    Blogit.Supervisor.start_link(@repository_provider)
   end
 
   def list_posts(from \\ 0, size \\ 5) do

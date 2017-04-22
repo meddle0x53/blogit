@@ -13,6 +13,7 @@ defmodule Blogit.Mixfile do
        repository containing markdown files.
      """,
      package: package(),
+     aliases: aliases(),
      deps: deps()]
   end
 
@@ -27,7 +28,8 @@ defmodule Blogit.Mixfile do
       {:earmark, "~> 1.1"},
       {:yaml_elixir, "~> 1.3.0"},
       {:calendar, "~> 0.16.1"},
-      {:ex_doc, ">= 0.15.0", only: :dev}
+      {:ex_doc, ">= 0.15.0", only: :dev},
+      {:dialyxir, "~> 0.5", only: [:dev], runtime: false}
     ]
   end
 
@@ -37,5 +39,9 @@ defmodule Blogit.Mixfile do
       maintainers: ["Nikolay Tsvetinov (Meddle)"],
       links: %{"GitHub" => "https://github.com/meddle0x53/blogit"}
     }
+  end
+
+  defp aliases do
+    [test: "test --no-start"]
   end
 end

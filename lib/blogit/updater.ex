@@ -3,6 +3,8 @@ defmodule Blogit.Updater do
   alias Blogit.Models.Post.Meta
   alias Blogit.Models.Configuration
 
+  alias Blogit.RepositoryProvider, as: Repository
+
   def check_updates(state) do
     rp = state.repository_provider
     repository = state.repository
@@ -28,7 +30,7 @@ defmodule Blogit.Updater do
     deleted_posts = (updates -- new_files)
                     |> Post.names_from_files |> Enum.map(&String.to_atom/1)
     current_posts
-    |> Map.merge(Post.compile_posts(rp, new_files, repository))
+    |> Map.merge(Post.compile_posts(new_files, %Repository{repo: repository, provider: rp}))
     |> Map.drop(deleted_posts)
   end
 
@@ -39,7 +41,7 @@ defmodule Blogit.Updater do
       f |> String.replace("meta/", "") |> String.replace_suffix("yml", "md")
     end)
 
-    Map.merge(current_posts, Post.compile_posts(rp, files, repository))
+    Map.merge(current_posts, Post.compile_posts(files, %Repository{repo: repository, provider: rp}))
   end
 
   defp updated_blog_configuration(_, true, rp), do: Configuration.from_file(rp)

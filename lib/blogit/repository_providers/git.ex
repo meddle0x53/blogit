@@ -51,6 +51,13 @@ defmodule Blogit.RepositoryProviders.Git do
     log(repository, ["-1", "--format=%ci", file_name]) |> String.trim
   end
 
+  def read_file(file_path, folder \\ "") do
+    file = local_path
+           |> Path.join(folder) |> Path.join(file_path)
+
+    File.read!(file)
+  end
+
   defp log(repository, args), do: Git.log!(repository, args)
 
   defp first_in_log(repository, args) do

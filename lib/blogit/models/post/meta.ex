@@ -1,26 +1,64 @@
 defmodule Blogit.Models.Post.Meta do
+  @moduledoc """
+  Represents the meta-data of a post.
+
+  Provides function to read/parse the meta information from a file.
+  All the meta-fields have default values.
+  The meta information can be defined in different places.
+
+  The highest priority place is the post itself. There is a configuration
+  for `meta_divider` and the meta information can be stored at the top of the
+  markdown file's content in YAML format. The markdown content and meta-data
+  are divided using the `meta_divider`.
+
+  With lower priority are files stored in a sub folder of the folder containing
+  the post markdown files, called `meta/`. If a post content is sotred in a file
+  called `some_post.md`, its meta-data have to be stored in a YAML file,
+  located at `meta/some_post.yml`.
+
+  With the lowest priority are the defaults and values read from the repository
+  containing the file.
+  """
+
+  alias Blogit.RepositoryProvider, as: Repository
+
   @posts_folder Application.get_env(:blogit, :posts_folder, ".")
   @meta_divider Application.get_env(:blogit, :meta_divider, "<><><><><><><><>")
 
+  @type t :: %__MODULE__{
+    author: String.t, title: String.t, category: String.t, published: boolean,
+    tags: [String.t], title_image_path: String.t, pinned: boolean,
+    created_at: Calendar::NaiveDateTime.t,
+    updated_at: Calendar::NaiveDateTime.t
+  }
   defstruct [
     :created_at, :updated_at, :author, :title, :category, :tags, :published,
-    :title_image_path, :year, :month, :pinned
+    :title_image_path, :pinned
   ]
 
-  def from_file_name(repository_provider, file_name, repository, raw, name) do
+  @doc """
+  Creates a Post.Meta structure using the source file of a Post, its raw data
+  and the repository containing the blog data.
+  """
+  @spec from_file(String.t, Repository.t, String.t, String.t) :: t
+  def from_file(file_name, repository, raw, name) do
     meta_file_name = file_name |> String.replace_suffix(".md", ".yml")
-    meta_path = repository_provider.local_path
+    meta_path = repository.provider.local_path
                 |> Path.join(@posts_folder)
                 |> Path.join("meta")
                 |> Path.join(meta_file_name)
 
     create_meta(
       File.read(meta_path),
-      repository_provider, file_name, repository, raw, name
+      repository.provider, file_name, repository.repo, raw, name
     )
   end
 
   def folder, do: Path.join(@posts_folder, "meta") |> String.trim_leading("/")
+
+  ###########
+  # Private #
+  ###########
 
   defp create_meta({:error, _}, rp, file_name, repository, raw, name) do
     create_from_map(
@@ -56,9 +94,8 @@ defmodule Blogit.Models.Post.Meta do
 
   defp merge_meta(current, _), do: current
 
-  defp create_from_map(
-    data, rp, file_name, repository, raw, name
-  ) when is_map(data) do
+  defp create_from_map(data, rp, file_name, repository, raw, name)
+  when is_map(data) do
     created_at = data["created_at"] || rp.file_created_at(
       repository, Path.join(@posts_folder, file_name)
     )
@@ -76,8 +113,7 @@ defmodule Blogit.Models.Post.Meta do
       title: data["title"] || retrieve_title(raw, name),
       tags: Map.get(data, "tags", []) |> Enum.map(&Kernel.to_string/1),
       published: Map.get(data, "published", true),
-      category: data["category"], year: Integer.to_string(created_at.year),
-      month: Integer.to_string(created_at.month),
+      category: data["category"],
       title_image_path: data["title_image_path"],
       pinned: data["pinned"] || false
     }

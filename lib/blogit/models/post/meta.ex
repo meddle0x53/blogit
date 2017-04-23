@@ -28,12 +28,13 @@ defmodule Blogit.Models.Post.Meta do
   @type t :: %__MODULE__{
     author: String.t, title: String.t, category: String.t, published: boolean,
     tags: [String.t], title_image_path: String.t, pinned: boolean,
+    year: String.t, month: String.t,
     created_at: Calendar::NaiveDateTime.t,
     updated_at: Calendar::NaiveDateTime.t
   }
   defstruct [
     :created_at, :updated_at, :author, :title, :category, :tags, :published,
-    :title_image_path, :pinned
+    :title_image_path, :pinned, :year, :month
   ]
 
   @doc """
@@ -117,7 +118,8 @@ defmodule Blogit.Models.Post.Meta do
       title: data["title"] || retrieve_title(raw, name),
       tags: Map.get(data, "tags", []) |> Enum.map(&Kernel.to_string/1),
       published: Map.get(data, "published", true),
-      category: data["category"],
+      category: data["category"], year: Integer.to_string(created_at.year),
+      month: Integer.to_string(created_at.month),
       title_image_path: data["title_image_path"],
       pinned: data["pinned"] || false
     }

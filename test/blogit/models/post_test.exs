@@ -30,7 +30,8 @@ defmodule Blogit.Models.PostTest do
         author: "meddle", title: "Processes", tags: [],
         pinned: false, published: true,
         created_at: ~N[2017-04-21 22:23:12],
-        updated_at: ~N[2017-04-22 13:15:32]
+        updated_at: ~N[2017-04-22 13:15:32],
+        year: "2017", month: "4"
       }
     end
   end
@@ -57,7 +58,8 @@ defmodule Blogit.Models.PostTest do
             author: "Reductions",
             category: nil, created_at: ~N[2017-04-21 22:23:12],
             pinned: false, published: true, tags: [], title: "Title",
-            title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32]
+            title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32],
+            year: "2017", month: "4"
           }
         },
         processes: %Post{
@@ -68,7 +70,8 @@ defmodule Blogit.Models.PostTest do
             author: "meddle", category: nil,
             created_at: ~N[2017-04-21 22:23:12], pinned: false,
             published: true, tags: [], title: "Processes",
-            title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32]
+            title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32],
+            year: "2017", month: "4"
           }
         }
       }

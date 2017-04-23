@@ -45,7 +45,7 @@ defmodule Blogit.Models.Post do
   def from_file(file_path, repository) do
     name = name_from_file(file_path)
 
-    raw = repository.provider.read_file(file_path, @posts_folder)
+    raw = repository.provider.read_file!(file_path, @posts_folder)
     data = String.split(raw, @meta_divider, trim: true)
            |> Enum.map(&String.trim/1)
 

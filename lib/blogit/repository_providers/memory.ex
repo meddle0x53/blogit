@@ -1,7 +1,7 @@
 defmodule Blogit.RepositoryProviders.Memory do
   @behaviour Blogit.RepositoryProvider
 
-  defstruct [raw_posts: [], updates: []]
+  defstruct [raw_posts: [], updates: [], files: %{}]
 
   defmodule RawPost do
     defstruct [
@@ -11,11 +11,26 @@ defmodule Blogit.RepositoryProviders.Memory do
     ]
   end
 
+  ############
+  # Specific #
+  ############
+
   def start_link(data \\ %Blogit.RepositoryProviders.Memory{}) do
     Agent.start_link(fn -> data end, name: __MODULE__)
   end
 
   def stop, do: Agent.stop(__MODULE__)
+
+  def add_file(file_name, data) do
+    Agent.get_and_update(__MODULE__, fn (%{files: files} = state) ->
+      updated = Map.put(files, file_name, data)
+      {updated, %{state | files: updated}}
+    end)
+  end
+
+  #############
+  # Behaviour #
+  #############
 
   def repository, do: __MODULE__
   def updated_repository, do: __MODULE__
@@ -29,7 +44,7 @@ defmodule Blogit.RepositoryProviders.Memory do
     end)
   end
 
-  def local_path, do: ""
+  def local_path, do: "memory"
   def local_files do
     Agent.get(__MODULE__, fn (%{raw_posts: posts}) ->
       posts |> Enum.map(fn (post) -> post.path end)
@@ -54,8 +69,16 @@ defmodule Blogit.RepositoryProviders.Memory do
     get_post_property_value_by_file_name(:updated_at, file_name)
   end
 
-  def read_file(file_name, _) do
+  def read_file!(file_name, _) do
     get_post_property_value_by_file_name(:content, file_name)
+  end
+
+  def read_file(file_name, _ \\ "") do
+    files = Agent.get(__MODULE__, fn (%{files: files}) -> files end)
+    case files[file_name] do
+      nil -> {:error, :file_not_found}
+      data -> {:ok, data}
+    end
   end
 
   def read_meta_file(file_name, _) do

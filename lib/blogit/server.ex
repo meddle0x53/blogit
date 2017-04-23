@@ -53,7 +53,7 @@ defmodule Blogit.Server do
 
   def handle_info(:check_updates, state) do
     Task.Supervisor.async_nolink(
-      :tasks_supervisor, Blogit.Updater, :check_updates, [state]
+      :tasks_supervisor, Blogit.Logic.Updater, :check_updates, [state]
     )
     {:noreply, state}
   end

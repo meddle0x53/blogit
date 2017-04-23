@@ -2,7 +2,7 @@ defmodule Blogit.Components.Posts do
   use GenServer
 
   alias Blogit.Models.Post
-  alias Blogit.Models.Post.Search
+  alias Blogit.Logic.Search
 
   def start_link() do
     GenServer.start_link(__MODULE__, nil, name: __MODULE__)

@@ -24,6 +24,7 @@ defmodule Blogit.RepositoryProvider do
   @callback file_created_at(repository, file_path) :: timestamp
   @callback file_updated_at(repository, file_path) :: timestamp
 
-  @callback read_file(file_path, folder) :: String.t
+  @callback read_file!(file_path, folder) :: String.t
+  @callback read_file(file_path, folder) :: file_read_result
   @callback read_meta_file(file_path, folder) :: file_read_result
 end

@@ -76,9 +76,9 @@ defmodule Blogit.Models.Post.Search do
         cond do
           grapheme == lead && !Enum.empty?(temp) ->
             %{temp: [], lead: lead, data: data ++ [temp]}
-          Enum.empty?(temp) && (grapheme == " " || grapheme == "\"")  ->
+          Enum.empty?(temp) && (grapheme == " " || grapheme == ~s("))  ->
             %{current | lead: grapheme}
-          (grapheme == " " && lead == "\"") || grapheme != " " ->
+          (grapheme == " " && lead == ~s(")) || grapheme != " " ->
             %{current | temp: [grapheme | temp]}
         end
       end)

@@ -58,6 +58,16 @@ defmodule Blogit.RepositoryProviders.Git do
     File.read!(file)
   end
 
+  def read_meta_file(file_path, folder \\ "") do
+    meta_file_path = file_path |> String.replace_suffix(".md", ".yml")
+    meta_path = local_path
+                |> Path.join(folder)
+                |> Path.join("meta")
+                |> Path.join(meta_file_path)
+
+    File.read(meta_path)
+  end
+
   defp log(repository, args), do: Git.log!(repository, args)
 
   defp first_in_log(repository, args) do

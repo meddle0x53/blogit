@@ -5,22 +5,7 @@ defmodule Blogit.Models.PostTest do
   alias Blogit.Models.Post
   alias Blogit.Models.Post.Meta
 
-  alias Blogit.RepositoryProviders.Memory
-  alias Blogit.RepositoryProviders.Memory.RawPost
-  alias Blogit.RepositoryProvider, as: Repository
-
-  setup do
-    raw_posts = [
-      %RawPost{author: "meddle", path: "processes.md", content: "Stuff"},
-      %RawPost{author: "valo", path: "modules_functions_recursion.md"},
-      %RawPost{author: "Reductions", path: "mix.md"},
-      %RawPost{author: "Andreshk", path: "control_flow_and_errors.md"}
-    ]
-
-    Memory.start_link(%Memory{raw_posts: raw_posts})
-
-    %{repository: %Repository{provider: Memory}}
-  end
+  setup do: Fixtures.posts_in_memory()
 
   describe ".from_file" do
     setup %{repository: repository} = context do

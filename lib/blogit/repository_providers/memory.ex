@@ -5,7 +5,7 @@ defmodule Blogit.RepositoryProviders.Memory do
 
   defmodule RawPost do
     defstruct [
-      :author, :path,
+      :author, :path, :meta,
       content: "# Title\n Some text...\n## Section 1\n Hey!!\n* i1\n * i2",
       updated_at: "2017-04-22 13:15:32", created_at: "2017-04-21 22:23:12"
     ]
@@ -58,6 +58,13 @@ defmodule Blogit.RepositoryProviders.Memory do
     get_post_property_value_by_file_name(:content, file_name)
   end
 
+  def read_meta_file(file_name, _) do
+    case get_post_property_value_by_file_name(:meta, file_name) do
+      nil -> {:error, "Nothing."}
+      meta -> {:ok, meta}
+    end
+  end
+
   ###########
   # Private #
   ###########
@@ -65,7 +72,7 @@ defmodule Blogit.RepositoryProviders.Memory do
   defp get_post_property_value_by_file_name(property, file_name) do
     Agent.get(__MODULE__, fn (%{raw_posts: posts}) ->
       case posts |> find_by_file_name(file_name) do
-        nil -> ""
+        nil -> nil
         post -> Map.get(post, property)
       end
     end)

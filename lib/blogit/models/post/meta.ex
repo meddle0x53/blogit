@@ -41,34 +41,38 @@ defmodule Blogit.Models.Post.Meta do
   and the repository containing the blog data.
   """
   @spec from_file(String.t, Repository.t, String.t, String.t) :: t
-  def from_file(file_name, repository, raw, name) do
-    meta_file_name = file_name |> String.replace_suffix(".md", ".yml")
-    meta_path = repository.provider.local_path
-                |> Path.join(@posts_folder)
-                |> Path.join("meta")
-                |> Path.join(meta_file_name)
-
+  def from_file(file_path, repository, raw, name) do
     create_meta(
-      File.read(meta_path),
-      repository.provider, file_name, repository.repo, raw, name
+      repository.provider.read_meta_file(file_path, @posts_folder), file_path,
+      repository, raw, name
     )
   end
 
+  @doc """
+  Retrieves the folder where the meta information files reside.
+
+  ## Examples
+
+      iex> folder = Blogit.Models.Post.Meta.folder()
+      iex> Path.split(folder)
+      ~w(posts meta)
+  """
+  @spec folder() :: String.t
   def folder, do: Path.join(@posts_folder, "meta") |> String.trim_leading("/")
 
   ###########
   # Private #
   ###########
 
-  defp create_meta({:error, _}, rp, file_name, repository, raw, name) do
+  defp create_meta({:error, _}, file_path, repository, raw, name) do
     create_from_map(
-      merge_with_inline(%{}, raw), rp, file_name, repository, raw, name
+      merge_with_inline(%{}, raw), file_path, repository, raw, name
     )
   end
 
-  defp create_meta({:ok, data}, rp, file_name, repository, raw, name) do
+  defp create_meta({:ok, data}, file_path, repository, raw, name) do
     meta = merge_with_inline(YamlElixir.read_from_string(data), raw)
-    create_from_map(meta, rp, file_name, repository, raw, name)
+    create_from_map(meta, file_path, repository, raw, name)
   end
 
   defp merge_with_inline(data, raw) when is_map(data) do
@@ -94,16 +98,16 @@ defmodule Blogit.Models.Post.Meta do
 
   defp merge_meta(current, _), do: current
 
-  defp create_from_map(data, rp, file_name, repository, raw, name)
+  defp create_from_map(data, file_path, repository, raw, name)
   when is_map(data) do
-    created_at = data["created_at"] || rp.file_created_at(
-      repository, Path.join(@posts_folder, file_name)
+    created_at = data["created_at"] || repository.provider.file_created_at(
+      repository.repo, Path.join(@posts_folder, file_path)
     )
-    updated_at = data["updated_at"] || rp.file_updated_at(
-      repository, Path.join(@posts_folder, file_name)
+    updated_at = data["updated_at"] || repository.provider.file_updated_at(
+      repository.repo, Path.join(@posts_folder, file_path)
     )
-    author = data["author"] || rp.file_author(
-      repository, Path.join(@posts_folder, file_name)
+    author = data["author"] || repository.provider.file_author(
+      repository.repo, Path.join(@posts_folder, file_path)
     )
     {:ok, created_at, _} = Calendar.NaiveDateTime.Parse.iso8601(created_at)
     {:ok, updated_at, _} = Calendar.NaiveDateTime.Parse.iso8601(updated_at)
@@ -119,8 +123,8 @@ defmodule Blogit.Models.Post.Meta do
     }
   end
 
-  defp create_from_map(_, rp, file_name, repository, raw, name) do
-    create_from_map(%{}, rp, file_name, repository, raw, name)
+  defp create_from_map(_, file_path, repository, raw, name) do
+    create_from_map(%{}, file_path, repository, raw, name)
   end
 
   defp retrieve_title(raw, name) do

@@ -2,8 +2,11 @@ defmodule Blogit.RepositoryProvider do
   @type repository :: term
   @type provider :: module
   @type fetch_result :: {:no_updates} | {:updates, [String.t]}
-  @type file_name :: String.t
   @type timestamp :: String.t
+
+  @type file_path :: String.t
+  @type folder :: String.t
+  @type file_read_result :: {:ok, binary} | {:error, File.posix}
 
   @type t :: %__MODULE__{repo: repository, provider: provider}
   @enforce_keys(:provider)
@@ -14,12 +17,13 @@ defmodule Blogit.RepositoryProvider do
   @callback fetch(repository) :: fetch_result
 
   @callback local_path() :: String.t
-  @callback local_files() :: [file_name]
-  @callback file_in?(file_name) :: boolean
+  @callback local_files() :: [file_path]
+  @callback file_in?(file_path) :: boolean
 
-  @callback file_author(repository, file_name) :: String.t
-  @callback file_created_at(repository, file_name) :: timestamp
-  @callback file_updated_at(repository, file_name) :: timestamp
+  @callback file_author(repository, file_path) :: String.t
+  @callback file_created_at(repository, file_path) :: timestamp
+  @callback file_updated_at(repository, file_path) :: timestamp
 
-  @callback read_file(file_name, folder :: String.t) :: String.t
+  @callback read_file(file_path, folder) :: String.t
+  @callback read_meta_file(file_path, folder) :: file_read_result
 end

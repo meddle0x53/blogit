@@ -24,6 +24,7 @@ defmodule Blogit.RepositoryProviders.Git do
 
   def fetch(repo) do
     case Git.fetch(repo) do
+      {:error, _} -> {:no_updates}
       {:ok, ""} -> {:no_updates}
       {:ok, _} ->
         updates =

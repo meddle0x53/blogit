@@ -8,25 +8,25 @@ defmodule Blogit.Server do
   alias Blogit.Components.PostsByDate
 
   alias Blogit.RepositoryProvider, as: Repository
+  alias Blogit.Components.Supervisor, as: ComponentsSupervisor
 
   @polling Application.get_env(:blogit, :polling, true)
   @poll_interval Application.get_env(:blogit, :poll_interval, 10_000)
 
   @enforce_keys [
-    :repository, :posts, :configuration, :sup, :repository_provider
+    :repository, :posts, :configuration, :repository_provider
   ]
   defstruct [
-    :repository, :posts, :configuration, :sup,
-    :repository_provider, :components_sup
+    :repository, :posts, :configuration, :repository_provider
   ]
 
   ##########
   # Client #
   ##########
 
-  def start_link(sup, repository_provider) do
+  def start_link(repository_provider) do
     GenServer.start_link(
-      __MODULE__, [sup, repository_provider], name: __MODULE__
+      __MODULE__, repository_provider, name: __MODULE__
     )
   end
 
@@ -34,21 +34,24 @@ defmodule Blogit.Server do
   # Server #
   ##########
 
-  def init([sup, repository_provider])
-  when is_pid(sup) and is_atom(repository_provider) do
-    state = init_state(sup, repository_provider)
+  def init(repository_provider) when is_atom(repository_provider) do
+    state = init_state(repository_provider)
 
     send(self(), :setup_components)
 
     {:ok, state}
   end
 
-  def handle_info(:setup_components, %{sup: sup} = state) do
-    {:ok, components_sup} = Supervisor.start_child(sup, supervisor_spec())
+  def handle_info(:setup_components, state) do
+    [Posts, Blogit.Components.Configuration, PostsByDate]
+    |> Enum.each(fn (module) ->
+      {:ok, _} =
+        Supervisor.start_child(ComponentsSupervisor, supervisor_spec(module))
+    end)
 
     try_check_after_interval(@polling, @poll_interval)
 
-    {:noreply, %{state | components_sup: components_sup}}
+    {:noreply, state}
   end
 
   def handle_info(:check_updates, state) do
@@ -87,13 +90,13 @@ defmodule Blogit.Server do
   # Private #
   ###########
 
-  defp supervisor_spec() do
+  defp supervisor_spec(module) do
     import Supervisor.Spec, warn: false
 
-    supervisor(Blogit.Components.Supervisor, [], restart: :temporary)
+    worker(module, [])
   end
 
-  defp init_state(sup, repository_provider) do
+  defp init_state(repository_provider) do
     repo = repository_provider.updated_repository
     repository = %Repository{repo: repo, provider: repository_provider}
 
@@ -102,7 +105,7 @@ defmodule Blogit.Server do
 
     %__MODULE__{
       repository: repo, posts: posts, configuration: configuration,
-      repository_provider: repository_provider, sup: sup
+      repository_provider: repository_provider
     }
   end
 

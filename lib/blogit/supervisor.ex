@@ -7,7 +7,9 @@ defmodule Blogit.Supervisor do
 
   def init(repository_provider) do
     children = [
-      worker(Blogit.Server, [self(), repository_provider]),
+      supervisor(Blogit.Components.Supervisor, []),
+      supervisor(Task.Supervisor, [[name: :tasks_supervisor]]),
+      worker(Blogit.Server, [repository_provider])
     ]
 
     opts = [strategy: :one_for_all]

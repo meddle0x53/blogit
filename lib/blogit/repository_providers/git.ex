@@ -1,4 +1,6 @@
 defmodule Blogit.RepositoryProviders.Git do
+  require Logger
+
   @behaviour Blogit.RepositoryProvider
 
   @repository_url Application.get_env(:blogit, :repository_url)
@@ -17,7 +19,13 @@ defmodule Blogit.RepositoryProviders.Git do
 
   def updated_repository do
     repo = repository()
-    Git.pull!(repo)
+    case Git.pull(repo) do
+      {:ok, msg} -> Logger.info("Pulling from git repository #{msg}")
+      {_, error} ->
+        Logger.error(
+          "Error while pulling from git repository #{inspect(error)}"
+        )
+    end
 
     repo
   end

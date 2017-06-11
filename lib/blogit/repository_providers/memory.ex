@@ -22,10 +22,35 @@ defmodule Blogit.RepositoryProviders.Memory do
   def stop, do: Agent.stop(__MODULE__)
 
   def add_file(file_name, data) do
-    Agent.get_and_update(__MODULE__, fn (%{files: files} = state) ->
+    Agent.get_and_update(__MODULE__,
+    fn (%{files: files, updates: updates} = state) ->
       updated = Map.put(files, file_name, data)
-      {updated, %{state | files: updated}}
+      {updated, %{state | files: updated, updates: [file_name | updates]}}
     end)
+  end
+
+  def add_post(raw_post) do
+    Agent.get_and_update(__MODULE__,
+    fn (%{updates: updates, raw_posts: raw_posts} = state) ->
+      {state, %{state |
+        raw_posts: [raw_post | raw_posts], updates: [raw_post.path | updates]
+      }}
+    end)
+  end
+
+  def delete_post(post_path) do
+    Agent.get_and_update(__MODULE__,
+    fn (%{updates: updates, raw_posts: raw_posts} = state) ->
+      updated_posts = Enum.filter(raw_posts, &(&1.path != post_path))
+      {state, %{state |
+        raw_posts: updated_posts, updates: [post_path | updates]
+      }}
+    end)
+  end
+
+  def replace_post(raw_post) do
+    delete_post(raw_post.path)
+    add_post(raw_post)
   end
 
   #############

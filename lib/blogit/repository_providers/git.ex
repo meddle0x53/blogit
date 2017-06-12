@@ -1,4 +1,31 @@
 defmodule Blogit.RepositoryProviders.Git do
+  @moduledoc """
+  This module implements the Blogit.RepositoryProvider behaviour.
+
+  It provides access to a git repository which could contain posts as markdown
+  files and blog configuration and styles.
+
+  If the git repository is not accessable in the moment the locally checked one
+  will be used and won't be updated.
+
+  The URL to the git remository have to be specified using the :blogit setting
+  :repository_url in the configuration.
+
+  The main folder containing the posts could be specified with the :posts_folder
+  setting. By default it is the root of the git repository.
+
+  For author of a post markdown file
+  (if not specified manually in the meta data) is used the creator of the file
+  in the git repository. For creation date is used the date of the first
+  commit of the file and for the last update date is used the date of the last
+  commit of the file.
+
+  The Blogit.RepositoryProvider.updated_repository implementation does
+  `git pull` before returning the repository representation. The
+  Blogit.RepositoryProvider.fetch/1 implementation uses `git fetch` to check
+  for deleted, added or updated files.
+  """
+
   require Logger
 
   @behaviour Blogit.RepositoryProvider
@@ -9,6 +36,10 @@ defmodule Blogit.RepositoryProviders.Git do
               |> List.last
               |> String.trim_trailing(".git")
   @posts_folder Application.get_env(:blogit, :posts_folder, ".")
+
+  #############
+  # Behaviour #
+  #############
 
   def repository do
     case Git.clone(@repository_url) do
@@ -80,6 +111,10 @@ defmodule Blogit.RepositoryProviders.Git do
 
     File.read(meta_path)
   end
+
+  ###########
+  # Private #
+  ###########
 
   defp log(repository, args), do: Git.log!(repository, args)
 

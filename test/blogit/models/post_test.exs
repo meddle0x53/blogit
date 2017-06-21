@@ -29,9 +29,9 @@ defmodule Blogit.Models.PostTest do
       assert post.meta == %Meta{
         author: "meddle", title: "Processes", tags: [],
         pinned: false, published: true,
-        created_at: ~N[2017-04-21 22:23:12],
+        created_at: ~N[2017-06-21 08:46:50],
         updated_at: ~N[2017-04-22 13:15:32],
-        year: "2017", month: "4"
+        year: "2017", month: "6"
       }
     end
   end
@@ -56,10 +56,10 @@ defmodule Blogit.Models.PostTest do
           raw: "# Title\n Some text...\n## Section 1\n Hey!!\n* i1\n * i2",
           meta: %Meta{
             author: "Reductions",
-            category: nil, created_at: ~N[2017-04-21 22:23:12],
+            category: nil, created_at: ~N[2017-05-30 21:26:49],
             pinned: false, published: true, tags: [], title: "Title",
             title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32],
-            year: "2017", month: "4"
+            year: "2017", month: "5"
           }
         },
         processes: %Post{
@@ -68,10 +68,10 @@ defmodule Blogit.Models.PostTest do
           raw: "Stuff",
           meta: %Meta{
             author: "meddle", category: nil,
-            created_at: ~N[2017-04-21 22:23:12], pinned: false,
+            created_at: ~N[2017-06-21 08:46:50], pinned: false,
             published: true, tags: [], title: "Processes",
             title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32],
-            year: "2017", month: "4"
+            year: "2017", month: "6"
           }
         }
       }

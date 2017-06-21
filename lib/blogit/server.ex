@@ -1,4 +1,29 @@
 defmodule Blogit.Server do
+  @moduledoc """
+  This module represents the core process of Blogit.
+
+  This process is responsible for loading the blog data from a repository,
+  using specified Blogit.RepositoryProvider implementation and keeping it
+  converted into structures. The component processes use these structures
+  as their state.
+
+  If `polling` is configured to true, this process polls for changes in the
+  source repository on interval, configured with `poll_interval`. By default
+  this inteval is 10 seconds.
+
+  This process is started and supervised as worker by Blogit.Supervisor.
+  It uses Task processes to chake for updated, which are supervised by the
+  Task.Supervisor process, started and supervised by Blogit.Supervisor.
+
+  If there are changes in the source repository, it is this process'
+  reposnibility to update the component processes.
+
+  The component processes are added as workers by this process to the
+  Blogit.Components.Supervisor, which starts with no workers. This is so,
+  because they are dependent on the Blogit.Server process and it must be
+  started and ready to accept messages before them.
+  """
+
   use GenServer
 
   alias Blogit.Models.Post
@@ -16,6 +41,10 @@ defmodule Blogit.Server do
   @enforce_keys [
     :repository, :posts, :configuration, :repository_provider
   ]
+  @type t :: %__MODULE__{
+    repository: Repository.t, posts: %{atom => Post.t},
+    configuration: Configuration.t, repository_provider: module
+  }
   defstruct [
     :repository, :posts, :configuration, :repository_provider
   ]
@@ -24,6 +53,22 @@ defmodule Blogit.Server do
   # Client #
   ##########
 
+  @doc """
+  Starts the Blogit.Server process.
+
+  This function has one argument - a module which must implement the
+  Blogit.RepositoryProvider behaviour. It is used to read data from the
+  source repository and to check for updates.
+
+  Once the process starts, it reads all the data from the repository, using
+  the given provider, converts it to Blogit.Models structures and creates
+  the component processes.
+
+  Every component process should retrieve the data it needs from the
+  Blogit.Server process. When there are updates, the blogit server will
+  update its components.
+  """
+  @spec start_link(module) :: GenServer.on_start
   def start_link(repository_provider) do
     GenServer.start_link(
       __MODULE__, repository_provider, name: __MODULE__
@@ -78,17 +123,33 @@ defmodule Blogit.Server do
     {:noreply, state}
   end
 
-  def handle_call(:get_configuration, _from, %{configuration: conf} = state) do
-    {:reply, conf, state}
+  def handle_call(:get_configuration, {pid, _}, %{configuration: conf} = st) do
+    ensure_caller(pid, [Blogit.Components.Configuration], conf, st)
   end
 
-  def handle_call(:get_posts, _from, %{posts: posts} = state) do
-    {:reply, posts, state}
+  def handle_call(:get_posts, {pid, _}, %{posts: posts} = state) do
+    ensure_caller(pid, [Posts, PostsByDate], posts, state)
   end
 
   ###########
   # Private #
   ###########
+
+  defp ensure_caller(pid, accepted_modules, reply, state) do
+    possible_pids = accepted_modules |> Enum.map(&Process.whereis/1)
+    if Enum.member?(possible_pids, pid) do
+      {:reply, reply, state}
+    else
+      possible_pids =
+        possible_pids |> Enum.map(&Kernel.inspect/1) |> Enum.join(" or ")
+      {
+        :stop,
+        "This callback can only be invoked by " <>
+        "#{possible_pids} but was invoked by #{inspect pid}",
+        state
+      }
+    end
+  end
 
   defp supervisor_spec(module) do
     import Supervisor.Spec, warn: false
@@ -104,7 +165,7 @@ defmodule Blogit.Server do
     configuration = Configuration.from_file(repository_provider)
 
     %__MODULE__{
-      repository: repo, posts: posts, configuration: configuration,
+      repository: repository, posts: posts, configuration: configuration,
       repository_provider: repository_provider
     }
   end

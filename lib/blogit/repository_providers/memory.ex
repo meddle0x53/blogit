@@ -1,9 +1,26 @@
 defmodule Blogit.RepositoryProviders.Memory do
+  @moduledoc """
+  This module implements the Blogit.RepositoryProvider behaviour.
+
+  It provides an in-memory repository access which can be used for testing.
+
+  The repository is just an Agent process, so messages could be sent to it
+  in order to make add or remove data to or from it.
+  """
+
   @behaviour Blogit.RepositoryProvider
 
+  alias Blogit.RepositoryProviders.Memory.RawPost
+  @opaque t :: %__MODULE__{
+    raw_posts: [RawPost.t], updates: [String.t], files: %{String.t => term}
+  }
   defstruct [raw_posts: [], updates: [], files: %{}]
 
   defmodule RawPost do
+    @opaque t :: %__MODULE__{
+      author: String.t, path: String.t, meta: String.t, content: String.t,
+      updated_at: String.t, created_at: String.t
+    }
     defstruct [
       :author, :path, :meta,
       content: "# Title\n Some text...\n## Section 1\n Hey!!\n* i1\n * i2",
@@ -15,20 +32,44 @@ defmodule Blogit.RepositoryProviders.Memory do
   # Specific #
   ############
 
+  @doc """
+  Starts the memory repository as a process. The process is names and
+  its name is the name of this module.
+
+  Accepts parameter of type Blogit.RepositoryProviders.Memory.t. By default
+  the repository is empty.
+  """
+  @spec start_link(t) :: {:ok, pid} | {:error, term}
   def start_link(data \\ %Blogit.RepositoryProviders.Memory{}) do
     Agent.start_link(fn -> data end, name: __MODULE__)
   end
 
+  @doc """
+  Stops the memory repository process.
+  """
+  @spec stop() :: :ok
   def stop, do: Agent.stop(__MODULE__)
 
-  def add_file(file_name, data) do
+  @doc """
+  Adds a file to the in-memory repository using the given file_path as path
+  to the file to create and the data as its contents.
+
+  Returns the state of the repository before the modification.
+  """
+  @spec add_file(String.t, term) :: t
+  def add_file(file_path, data) do
     Agent.get_and_update(__MODULE__,
     fn (%{files: files, updates: updates} = state) ->
-      updated = Map.put(files, file_name, data)
-      {updated, %{state | files: updated, updates: [file_name | updates]}}
+      updated = Map.put(files, file_path, data)
+      {state, %{state | files: updated, updates: [file_path | updates]}}
     end)
   end
 
+  @doc """
+  Adds a post to the in-memory repository. Returns the state of the in-memory
+  repository before the addition.
+  """
+  @spec add_post(RawPost.t) :: t
   def add_post(raw_post) do
     Agent.get_and_update(__MODULE__,
     fn (%{updates: updates, raw_posts: raw_posts} = state) ->
@@ -38,6 +79,11 @@ defmodule Blogit.RepositoryProviders.Memory do
     end)
   end
 
+  @doc """
+  Deletes a post from the in-memory repository. Returns the state of the
+  repository before the modification.
+  """
+  @spec delete_post(String.t) :: t
   def delete_post(post_path) do
     Agent.get_and_update(__MODULE__,
     fn (%{updates: updates, raw_posts: raw_posts} = state) ->
@@ -48,9 +94,21 @@ defmodule Blogit.RepositoryProviders.Memory do
     end)
   end
 
+  @doc """
+  Replaces an existing post from the in-memory repository with new content.
+  If the post doesn't eixit, creates it. Returns the state of the repository
+  before the modification.
+  """
+  @spec replace_post(RawPost.t) :: t
   def replace_post(raw_post) do
-    delete_post(raw_post.path)
-    add_post(raw_post)
+    Agent.get_and_update(__MODULE__,
+    fn (%{updates: updates, raw_posts: raw_posts} = state) ->
+      updated_posts = Enum.filter(raw_posts, &(&1.path != raw_post.path))
+      {state, %{state |
+        raw_posts: [raw_post | updated_posts],
+        updates: [raw_post.path | updates]
+      }}
+    end)
   end
 
   #############

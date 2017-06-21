@@ -6,6 +6,11 @@ defmodule Blogit.Models.Post.MetaTest do
 
   setup do
     Application.ensure_all_started(:yaml_elixir)
+
+    on_exit fn ->
+      Application.stop(:yaml_elixir)
+    end
+
     Fixtures.posts_in_memory()
   end
 

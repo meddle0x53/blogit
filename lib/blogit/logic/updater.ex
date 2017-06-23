@@ -35,7 +35,7 @@ defmodule Blogit.Logic.Updater do
   """
   @spec check_updates(Blogit.Server.t) :: check_updates_result
   def check_updates(state) do
-    case state.repository.provider.fetch(state.repository) do
+    case state.repository.provider.fetch(state.repository.repo) do
       {:no_updates} -> :no_updates
       {:updates, updates} -> update(updates, state)
     end

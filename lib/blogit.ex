@@ -144,13 +144,14 @@ defmodule Blogit do
 
   @doc """
   Returns a single post by its unique indentifier - its `name` field.
+  The name should be an atom.
 
   Posts have unique names, usually constructed using the file path of their
   source markdown file in the repository.
 
   If there is no post with the given name, the atom `:error` is returned.
   """
-  @spec post_by_name(String.t) :: Post.t | :error
+  @spec post_by_name(atom) :: Post.t | :error
   def post_by_name(name), do: GenServer.call(Posts, {:by_name, name})
 
   @doc """

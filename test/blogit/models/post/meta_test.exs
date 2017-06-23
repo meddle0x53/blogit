@@ -4,7 +4,7 @@ defmodule Blogit.Models.Post.MetaTest do
 
   alias Blogit.Models.Post.Meta
 
-  setup do
+  setup_all do
     Application.ensure_all_started(:yaml_elixir)
 
     on_exit fn ->

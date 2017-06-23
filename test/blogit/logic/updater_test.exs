@@ -16,8 +16,7 @@ defmodule Blogit.Logic.UpdaterTest do
       configuration = Configuration.from_file(repository.provider)
       %{
         state: %Blogit.Server{
-          repository: repository, posts: posts, configuration: configuration,
-          repository_provider: repository.provider
+          repository: repository, posts: posts, configuration: configuration
         }
       }
     end

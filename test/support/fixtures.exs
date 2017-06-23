@@ -49,7 +49,7 @@ defmodule Fixtures do
     },
     %RawPost{
       author: "meddle", path: "otp.md", created_at: "2017-06-15 05:37:10",
-      meta: "tags:\n  - ab\n  - cd"
+      meta: "tags:\n  - ab\n  - cd", content: "OTP!"
     },
     %RawPost{
       author: "meddle", path: "nodes.md", created_at: "2017-06-10 18:52:49",
@@ -61,7 +61,7 @@ defmodule Fixtures do
   def posts, do: @raw_posts
 
   def posts_in_memory do
-    Memory.start_link(%Memory{raw_posts: @raw_posts})
+    {:ok, _} = Memory.start_link(%Memory{raw_posts: @raw_posts})
 
     %{repository: %Repository{provider: Memory}}
   end

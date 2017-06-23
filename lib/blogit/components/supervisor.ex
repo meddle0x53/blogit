@@ -18,6 +18,15 @@ defmodule Blogit.Components.Supervisor do
 
   use Supervisor
 
+  @doc """
+  Starts the Supervisor.
+
+  The strategy of the Blogit.Components.Supervisor is `one_for_one` and it
+  starts with no children specifications. The specifications of the components
+  are added to it by the Blogit.Server worker process once it can accept
+  messages and has the data needed by the component processes loaded.
+  """
+  @spec start_link() :: Supervisor.on_start
   def start_link() do
     Supervisor.start_link(__MODULE__, nil, name: __MODULE__)
   end

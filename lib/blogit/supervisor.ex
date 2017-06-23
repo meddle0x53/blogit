@@ -46,11 +46,11 @@ defmodule Blogit.Supervisor do
     ]
 
     children =
-    case repository_provider do
-      Blogit.RepositoryProviders.Memory ->
-        [worker(repository_provider, []) | children]
-      _ -> children
-    end
+      case repository_provider do
+        Blogit.RepositoryProviders.Memory ->
+          [worker(repository_provider, []) | children]
+        _ -> children
+      end
 
     opts = [strategy: :one_for_all]
 

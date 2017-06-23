@@ -1,26 +1,25 @@
 defmodule BlogitTest do
   use ExUnit.Case
 
+  alias Blogit.RepositoryProviders.Memory
+
   defp wait_for_update do
-    updated =
-      Agent.get(Blogit.RepositoryProviders.Memory, fn data ->
-        Enum.empty?(data.updates)
-      end)
+    updated = Agent.get(Memory, fn data -> Enum.empty?(data.updates) end)
 
     case updated do
-      true -> :ok
+      true -> Process.sleep(200)
       false ->
         Process.sleep(100)
         wait_for_update()
     end
   end
 
-  setup do
+  setup_all do
     {:ok, _} = Application.ensure_all_started(:blogit)
 
     :sys.get_state(Process.whereis(Blogit.Server))
 
-    Agent.update(Blogit.RepositoryProviders.Memory, fn data ->
+    Agent.update(Memory, fn data ->
       %{data |
         raw_posts: Fixtures.posts(),
         updates: Enum.map(Fixtures.posts(), &(&1.path))
@@ -32,6 +31,7 @@ defmodule BlogitTest do
 
     on_exit fn ->
       Application.stop(:blogit)
+      Process.sleep(200)
     end
 
     :ok
@@ -117,6 +117,82 @@ defmodule BlogitTest do
         Blogit.filter_posts(%{"q" => "Stuff"}) |> Enum.map(& &1.name)
 
       assert names == ~w[processes]
+    end
+
+    test "filters posts by multiple types of filters, the list is sorted " <>
+    "with newest first" do
+      filters = %{"q" => "OTP", "author" => "meddle", tags: "ab"}
+      names = Blogit.filter_posts(filters) |> Enum.map(& &1.name)
+
+      assert names == ~w[otp]
+    end
+
+    test "the list of posts returns maximum 5 posts by default" do
+      names = Blogit.filter_posts(%{}) |> Enum.map(& &1.name)
+
+      assert names == ~w[processes plug otp nodes modules_functions_recursion]
+    end
+
+    test "the second argument - `from` can be used as start position" do
+      names = Blogit.filter_posts(%{}, 1) |> Enum.map(& &1.name)
+
+      assert names == ~w[plug otp nodes modules_functions_recursion mix]
+    end
+
+    test "the third argument - `size` can be used to change the default of " <>
+    "5 posts returned" do
+      names = Blogit.filter_posts(%{}, 2, 2) |> Enum.map(& &1.name)
+
+      assert names == ~w[otp nodes]
+    end
+  end
+
+  describe ".posts_by_date" do
+    test "returns a list of tupples of three elements {year, monthe, N}, " <>
+    "where N is the number of post for the month of the year. Newest first." do
+      posts_by_date = Blogit.posts_by_dates()
+
+      assert posts_by_date == [{2017, 6, 5}, {2017, 5, 1}, {2016, 5, 1}]
+    end
+  end
+
+  describe ".post_by_name" do
+    test "returns a post by its unique identifier - its name" do
+      post = Blogit.post_by_name(:otp)
+
+      assert post.name == "otp"
+      assert post.meta.author == "meddle"
+      assert post.raw == "OTP!"
+    end
+
+    test "returns the atom :error if no post with the given name is found" do
+      assert Blogit.post_by_name(:something_else) == :error
+    end
+  end
+
+  describe ".configuration" do
+    alias Blogit.Models.Configuration
+
+    test "returns the blog configuration as Blogit.Models.Configuration" do
+      assert Blogit.configuration() == %Configuration{ title: "Memory" }
+    end
+  end
+
+  describe "Blogit.Server" do
+    test "the state of the process is all the blog data - " <>
+    "the posts and the configuration" do
+      %{
+        configuration: configuration, posts: posts, repository: repository
+      } = :sys.get_state(Blogit.Server)
+
+      assert configuration == %Blogit.Models.Configuration{ title: "Memory"}
+      assert Map.keys(posts) == [
+       :control_flow_and_errors, :mix, :modules_functions_recursion, :nodes,
+       :otp, :plug, :processes
+      ]
+      assert repository == %Blogit.RepositoryProvider{
+        repo: Memory, provider: Memory
+      }
     end
   end
 end

@@ -38,16 +38,12 @@ defmodule Blogit.Server do
   @polling Application.get_env(:blogit, :polling, true)
   @poll_interval Application.get_env(:blogit, :poll_interval, 10_000)
 
-  @enforce_keys [
-    :repository, :posts, :configuration, :repository_provider
-  ]
+  @enforce_keys [:repository, :posts, :configuration]
   @type t :: %__MODULE__{
     repository: Repository.t, posts: %{atom => Post.t},
-    configuration: Configuration.t, repository_provider: module
+    configuration: Configuration.t
   }
-  defstruct [
-    :repository, :posts, :configuration, :repository_provider
-  ]
+  defstruct [:repository, :posts, :configuration]
 
   ##########
   # Client #
@@ -113,7 +109,7 @@ defmodule Blogit.Server do
   ) do
     GenServer.cast(Posts, {:update, posts})
     GenServer.cast(Blogit.Components.Configuration, {:update, configuration})
-    GenServer.cast(PostsByDate, :stop)
+    GenServer.cast(PostsByDate, :reset)
 
     {:noreply, %{state | posts: posts, configuration: configuration}}
   end
@@ -165,8 +161,7 @@ defmodule Blogit.Server do
     configuration = Configuration.from_file(repository_provider)
 
     %__MODULE__{
-      repository: repository, posts: posts, configuration: configuration,
-      repository_provider: repository_provider
+      repository: repository, posts: posts, configuration: configuration
     }
   end
 

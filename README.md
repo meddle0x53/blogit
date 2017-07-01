@@ -190,5 +190,5 @@ I'm Nikolay Tsvetinov (meddle) from [elixir-lang.bg](https://blog.elixir-lang.bg
 You can find me at:
 * [Twitter](https://twitter.com/ntzvetinov)
 * [Github](https://github.com/meddle0x53)
-* n.tzvetinov@gmail.com
-* n.tzvetinov@elixir-lang.bg
+* [Gmail](mailto:n.tzvetinov@gmail.com)
+* [elixir-lang.bg](mailto:n.tzvetinov@elixir-lang.bg)

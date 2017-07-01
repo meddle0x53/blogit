@@ -23,7 +23,7 @@ defmodule Blogit.Models.Post.Meta do
   alias Blogit.RepositoryProvider, as: Repository
 
   @posts_folder Application.get_env(:blogit, :posts_folder, ".")
-  @meta_divider Application.get_env(:blogit, :meta_divider, "<><><><><><><><>")
+  @meta_divider Application.get_env(:blogit, :meta_divider, "--------")
 
   @type t :: %__MODULE__{
     author: String.t, title: String.t, category: String.t, published: boolean,

@@ -60,11 +60,11 @@ defmodule Blogit do
   end
 
   @doc """
-  Returns a list of the Blogit.Models.Posts structures representing posts in
-  the blog. The posts are sorted by their creation date.
+  Returns a list of Blogit.Models.Post structures representing posts in
+  the blog. The posts are sorted by their creation date, newest first.
 
   All the markdown files in the configured posts folder will be transformed
-  into Blogit.Models.Posts structures and their `created_at` meta field
+  into Blogit.Models.Post structures and their `created_at` meta field
   will be read using the configured Blogit.RepositoryProvider.
 
   Example configuration (`config/prod.exs`):
@@ -80,7 +80,7 @@ defmodule Blogit do
   Posts can be skipped using the `from` argument, passed to the function,
   which is `0` by default. The size of the returned list is `5` by default,
   but it can be changed with the second argument of the function - `size`.
-  Using these two arguments simple paging functionality can be implemented.
+  By using these two arguments simple paging functionality can be implemented.
   """
   @spec list_posts(non_neg_integer, non_neg_integer) :: [Post.t]
   def list_posts(from \\ 0, size \\ 5) do
@@ -88,11 +88,11 @@ defmodule Blogit do
   end
 
   @doc """
-  Returns a list of the Blogit.Models.Posts structures representing pinned
-  posts in the blog. The posts are sorted by their last updated date.
+  Returns a list of Blogit.Models.Post structures representing pinned
+  posts in the blog. These posts are sorted by their last updated date.
 
   All the markdown files in the configured posts folder will be transformed
-  into Blogit.Models.Posts structures and their `updated_at` meta field
+  into Blogit.Models.Post structures and their `updated_at` meta field
   will be read using the configured Blogit.RepositoryProvider.
 
   Pinned posts are posts which have specified `pinned: true` in their meta
@@ -105,24 +105,24 @@ defmodule Blogit do
   def list_pinned(), do: GenServer.call(Posts, :list_pinned)
 
   @doc """
-  Returns a list of Blogit.Models.Posts, filtered by given criteria.
+  Returns a list of Blogit.Models.Post structures, filtered by given criteria.
 
   The first argument of the function is a map of filters.
   This map supports zero or more of the following keys:
-  * "author" - Used to filter Posts by their `.meta.author` field.
-  * "category" - Used to filter Posts by their `.meta.category` field.
-  * "tags" - Used to filter Posts by their `.meta.tags` field.
+  * "author" - Used to filter posts by their `.meta.author` field.
+  * "category" - Used to filter posts by their `.meta.category` field.
+  * "tags" - Used to filter posts by their `.meta.tags` field.
     The value for this key should a string of comma separated tags.
-  * "year" - Used to filter Posts by their `.meta.year` field.
-  * "month" - Used to filter Posts by their `.meta.month` field.
-  * "q" - A query to filter Posts by their content or title. Support text in
+  * "year" - Used to filter posts by their `.meta.year` field.
+  * "month" - Used to filter posts by their `.meta.month` field.
+  * "q" - A query to filter posts by their content or title. Supports text in
     double quotes in order to search for phrases.
 
   For more information on the filtering see
   Blogit.Logic.Search.filter_by_params/2.
 
   The other two arguments of the function can be used for paging.
-  Filtered Posts can be skipped using the `from` argument,
+  Filtered posts can be skipped using the `from` argument,
   which is `0` by default. The size of the returned list is `5` by default,
   but it can be changed with the third argument of the function - `size`.
   """
@@ -137,7 +137,7 @@ defmodule Blogit do
 
   Can be used for implementing an easy-to-browse view component by years/months.
 
-  For more information see Blogit.Models.Posts.collect_by_year_and_month/1.
+  For more information see Blogit.Models.Post.collect_by_year_and_month/1.
   """
   @spec posts_by_dates() :: Post.year_month_count_result
   def posts_by_dates, do: GenServer.call(PostsByDate, :get)

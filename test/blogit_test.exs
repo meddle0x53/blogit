@@ -121,7 +121,7 @@ defmodule BlogitTest do
 
     test "filters posts by multiple types of filters, the list is sorted " <>
     "with newest first" do
-      filters = %{"q" => "OTP", "author" => "meddle", tags: "ab"}
+      filters = %{"q" => "OTP", "author" => "meddle", "tags" => "ab"}
       names = Blogit.filter_posts(filters) |> Enum.map(& &1.name)
 
       assert names == ~w[otp]

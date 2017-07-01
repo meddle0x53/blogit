@@ -24,7 +24,7 @@ defmodule Blogit.Models.Post do
   alias Blogit.RepositoryProvider, as: Repository
 
   @posts_folder Application.get_env(:blogit, :posts_folder, "")
-  @meta_divider Application.get_env(:blogit, :meta_divider, "<><><><><><><><>")
+  @meta_divider Application.get_env(:blogit, :meta_divider, "--------")
 
   @type t :: %__MODULE__{
     name: String.t, raw: String.t, html: String.t, meta: Meta.t
@@ -142,9 +142,10 @@ defmodule Blogit.Models.Post do
 
   The first element of a tuple is a year.
   The second is a month number.
-  The third is a counter - how many posts are created at these month and year.
+  The third is a counter - how many posts are created during the month
+  and the year.
 
-  The tupes are sorted from the newest to the oldes, using the years
+  The tupes are sorted from the newest to the oldest, using the years
   and the months.
 
   ## Examples

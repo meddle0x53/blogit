@@ -15,19 +15,19 @@ It is [available in Hex](https://hex.pm/docs/publish), so the package can be ins
 
   1. Add `blogit` to your list of dependencies in `mix.exs`:
 
-    ```elixir
-    def deps do
-      [{:blogit, "~> 1.0.0"}]
-    end
-    ```
+      ```elixir
+      def deps do
+        [{:blogit, "~> 1.0.0"}]
+      end
+      ```
 
   2. Ensure `blogit` is started before your application:
 
-    ```elixir
-    def application do
-      [applications: [:blogit]]
-    end
-    ```
+      ```elixir
+      def application do
+        [applications: [:blogit]]
+      end
+      ```
 
 ## Configuration
 
@@ -105,10 +105,10 @@ When the application is configured and started, the following functions can be c
 
     Example:
 
-    ```elixir
+      ```elixir
       filters = %{"q" => "OTP", "author" => "meddle", "tags" => "ab"}
       Blogit.filter_posts(filters)
-    ```
+      ```
 
   * `Blogit.posts_by_dates()`
 
@@ -151,12 +151,12 @@ Follow these steps to create your own blog:
   1. For the aformentioned [BlogitWeb](https://github.com/meddle0x53/blogit_web) project.
   2. Modify its `config/prod.exs` configuration:
 
-    ```elixir
-    config :blogit,
-      repository_url: "<path-to-a-git-repository-with-your-posts>",
-      polling: true, poll_interval: 300_000, mode: :prod,
-      meta_divider: "--------", assets_path: "assets"
-    ```
+      ```elixir
+      config :blogit,
+        repository_url: "<path-to-a-git-repository-with-your-posts>",
+        polling: true, poll_interval: 300_000, mode: :prod,
+        meta_divider: "--------", assets_path: "assets"
+      ```
 
   3. Deploy it somewhere.
 
@@ -192,11 +192,3 @@ You can find me at:
 * [Github](https://github.com/meddle0x53)
 * [Gmail](n.tzvetinov@gmail.com)
 * [elixir-lang.bg](n.tzvetinov@elixir-lang.bg)
-* [Facebook](https://www.facebook.com/meddle0x53), but you don't need that :)
-* [My old blog](https://meddle0x53.wordpress.com/), will make a new one, mostly Elixir and Rust oriented and will use Blogit!
-* [linkedin](https://www.linkedin.com/in/nickolay-tsvetinov-06242930)
-* [Soundcloud](https://soundcloud.com/smerch)
-* [Bandcamp](http://smerch.bandcamp.com/)
-* At home, but won't tell where that is :)
-
-Wow, I'm sooo social!

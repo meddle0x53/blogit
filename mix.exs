@@ -1,13 +1,18 @@
 defmodule Blogit.Mixfile do
   use Mix.Project
 
+  @version "1.0.1"
+
   def project do
     [app: :blogit,
-     version: "1.0.0",
+     version: @version,
      elixir: "~> 1.4",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     docs: [readme: true, main: "README.md"],
+     docs: [
+       extras: ["README.md"], main: "readme", source_ref: "v#{@version}",
+       source_url: "https://github.com/meddle0x53/blogit"
+     ],
      description: """
        Blogit is an OTP application for generating blog posts from a git
        repository containing markdown files.

@@ -29,9 +29,6 @@ defmodule Blogit.Logic.Updater do
   }.
 
   This function is called in a supervised Task by the Blogit.Server process.
-  The process passes to it its state and awaits for two kind of messages:
-  * :no_updates
-  * {:updates, <map-with-the-updated-posts-and-configuration>}
   """
   @spec check_updates(Blogit.Server.t) :: check_updates_result
   def check_updates(state) do

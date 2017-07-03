@@ -5,7 +5,7 @@ defmodule Blogit.Logic.Search do
   Lists of Post structures can be filtered by 'author', 'category', 'tags',
   'year' and 'month'.
 
-  The content and the title of lists of Posts can be searched using a query.
+  The content and the title of lists of `Blogit.Models.Post`s can be searched using a query.
   """
 
   @supported_params ~w(author category tags year month q)
@@ -14,7 +14,8 @@ defmodule Blogit.Logic.Search do
   @type posts :: [Blogit.Models.Post.t]
 
   @doc """
-  Filters a list of Post structures using a map meta fields to filter by and/or
+  Filters a list of `Blogit.Models.Post` structures using a map meta fields
+  to filter by and/or
   search query to match to their contents and/or titles.
 
   The map parameter supports zero or more of the following keys:

@@ -1,6 +1,6 @@
 defmodule Blogit.RepositoryProviders.Memory do
   @moduledoc """
-  This module implements the Blogit.RepositoryProvider behaviour.
+  This module implements the `Blogit.RepositoryProvider` behaviour.
 
   It provides an in-memory repository access which can be used for testing.
 
@@ -36,7 +36,7 @@ defmodule Blogit.RepositoryProviders.Memory do
   Starts the memory repository as a process. The process is names and
   its name is the name of this module.
 
-  Accepts parameter of type Blogit.RepositoryProviders.Memory.t. By default
+  Accepts parameter of type `Blogit.RepositoryProviders.Memory.t`. By default
   the repository is empty.
   """
   @spec start_link(t) :: {:ok, pid} | {:error, term}
@@ -96,7 +96,7 @@ defmodule Blogit.RepositoryProviders.Memory do
 
   @doc """
   Replaces an existing post from the in-memory repository with new content.
-  If the post doesn't eixit, creates it. Returns the state of the repository
+  If the post doesn't exit, creates it. Returns the state of the repository
   before the modification.
   """
   @spec replace_post(RawPost.t) :: t

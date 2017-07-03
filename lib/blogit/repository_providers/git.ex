@@ -1,14 +1,14 @@
 defmodule Blogit.RepositoryProviders.Git do
   @moduledoc """
-  This module implements the Blogit.RepositoryProvider behaviour.
+  This module implements the `Blogit.RepositoryProvider` behaviour.
 
   It provides access to a git repository which could contain posts as markdown
   files and blog configuration and styles.
 
-  If the git repository is not accessable in the moment the locally checked one
+  If the git repository is not accessible in the moment the locally checked one
   will be used and won't be updated.
 
-  The URL to the git remository have to be specified using the :blogit setting
+  The URL to the git repository have to be specified using the :blogit setting
   :repository_url in the configuration.
 
   The main folder containing the posts could be specified with the :posts_folder
@@ -20,9 +20,9 @@ defmodule Blogit.RepositoryProviders.Git do
   commit of the file and for the last update date is used the date of the last
   commit of the file.
 
-  The Blogit.RepositoryProvider.updated_repository implementation does
+  The `Blogit.RepositoryProvider.updated_repository/0` implementation does
   `git pull` before returning the repository representation. The
-  Blogit.RepositoryProvider.fetch/1 implementation uses `git fetch` to check
+  `Blogit.RepositoryProvider.fetch/1` implementation uses `git fetch` to check
   for deleted, added or updated files.
   """
 

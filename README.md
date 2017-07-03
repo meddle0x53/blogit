@@ -1,11 +1,11 @@
 # Blogit
 
-Blogit is a blog engine backend written in Elixir. It turns a repository (by default git repository),
-containing markdown files into a list of blog posts, which can e queried.
+Blogit is a blog engine back-end written in Elixir. It turns a repository (by default git repository),
+containing markdown files into streams of blog posts, which can be queried.
 Blogit supports blog configuration in YAML, including blog title, path to custom stiles and images, etc.
 
-There is a frontend implementation in phoenix, which uses Blogit - [BlogitWeb](https://github.com/meddle0x53/blogit_web).
-It can be clonned and configured to use any repository to build custom blog.
+There is a front-end implementation in phoenix, which uses Blogit - [BlogitWeb](https://github.com/meddle0x53/blogit_web).
+It can be forked and configured to use any repository to build custom blog.
 
 The [blog](https://blog.elixir-lang.bg) for the Sofia University Elixir course runs on Blogit.
 
@@ -115,19 +115,19 @@ When the application is configured and started, the following functions can be c
     Returns lists of posts grouped by years and then months for every year.
     Can be used for implementing an easy-to-browse view component by years/months.
 
-    The result is list of tupples.
+    The result is list of tuples.
     The first element of a tuple is a year.
     The second is a month number.
     The third is a counter - how many posts are created during the month and the year.
 
-    The tupes are sorted from the newest to the oldest, using the years
+    The tuples are sorted from the newest to the oldest, using the years
 
   * `Blogit.configuration()`
 
     Retrieves the blog configuration. The configuration is in the form
     of a `Blogit.Models.Configuration` structure.
 
-    It contains title and sub-title of the blog, path to log or backgorund image (or both),
+    It contains title and sub-title of the blog, path to log or background image (or both),
     path to custom CSS file, etc..
 
 ## License
@@ -137,18 +137,18 @@ you want with it. You can also contribute to it.
 
 ## Contributions
 
-Just fork the Blogit repository and create a PR. You can also craete issues
-with features you wish we support. You can propse style changes on the code and
+Just fork the Blogit repository and create a PR. You can also create issues
+with features you wish we support. You can propose style changes on the code and
 additional tests.
 
 All kinds of contributions are welcome!
 
 ## How to create your own blog?
 
-Blogit has a simple Phoenix frontend application : [BlogitWeb](https://github.com/meddle0x53/blogit_web).
+Blogit has a simple Phoenix front-end application : [BlogitWeb](https://github.com/meddle0x53/blogit_web).
 
 Follow these steps to create your own blog:
-  1. For the aformentioned [BlogitWeb](https://github.com/meddle0x53/blogit_web) project.
+  1. Fork [BlogitWeb](https://github.com/meddle0x53/blogit_web) project.
   2. Modify its `config/prod.exs` configuration:
 
       ```elixir
@@ -169,19 +169,19 @@ Follow these steps to create your own blog:
      `Docker` if you don't have `Elixir` installed. It has a `Dockerfile` too so
      you can try it locally.
   4. When it is deployed just add new markdown posts to your repository specified
-     in the configuration and it will be published authomatically.
+     in the configuration and it will be published automatically.
 
 ## Features to be implemented
 
   * Multiple languages. This way we'll have blogs that have streams
     in multiple languages.
   * Pages (for example 'about me') and specific streams of posts, presented as pages.
-  * Slides. If we have a folder containing a specifically formated markdown (?) files, thwy could be
+  * Slides. If we have a folder containing a specifically formated markdown (?) files, they could be
     turned into slides available on Blogit.
-  * Diffrent frontends for Blogit. Not only BlogtWeb. Also let's keep BlogitWeb upto date, tested and documented. For now it is a bit messy, but usable.
-  * Multiple source formats for posts, not only MARKDONW.
+  * Different front-ends for Blogit. Not only BlogtWeb. Also let's keep BlogitWeb up to date, tested and documented. For now it is a bit messy, but usable.
+  * Multiple source formats for posts, not only MARKDOWN.
   * Additional repository providers.
-  * Docial media integrations.
+  * Social media integrations.
 
 ## Contact me
 

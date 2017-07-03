@@ -3,24 +3,24 @@ defmodule Blogit.Server do
   This module represents the core process of Blogit.
 
   This process is responsible for loading the blog data from a repository,
-  using specified Blogit.RepositoryProvider implementation and keeping it
+  using specified `Blogit.RepositoryProvider` implementation and keeping it
   converted into structures. The component processes use these structures
   as their state.
 
   If `polling` is configured to true, this process polls for changes in the
   source repository on interval, configured with `poll_interval`. By default
-  this inteval is 10 seconds.
+  this interval is 10 seconds.
 
-  This process is started and supervised as worker by Blogit.Supervisor.
-  It uses Task processes to chake for updated, which are supervised by the
-  Task.Supervisor process, started and supervised by Blogit.Supervisor.
+  This process is started and supervised as worker by `Blogit.Supervisor`.
+  It uses Task processes to check for updated, which are supervised by the
+  Task.Supervisor process, started and supervised by `Blogit.Supervisor`.
 
   If there are changes in the source repository, it is this process'
-  reposnibility to update the component processes.
+  responsibility to update the component processes.
 
   The component processes are added as workers by this process to the
-  Blogit.Components.Supervisor, which starts with no workers. This is so,
-  because they are dependent on the Blogit.Server process and it must be
+  `Blogit.Components.Supervisor`, which starts with no workers. This is so,
+  because they are dependent on the `Blogit.Server` process and it must be
   started and ready to accept messages before them.
   """
 
@@ -50,10 +50,10 @@ defmodule Blogit.Server do
   ##########
 
   @doc """
-  Starts the Blogit.Server process.
+  Starts the `Blogit.Server` process.
 
   This function has one argument - a module which must implement the
-  Blogit.RepositoryProvider behaviour. It is used to read data from the
+  `Blogit.RepositoryProvider` behaviour. It is used to read data from the
   source repository and to check for updates.
 
   Once the process starts, it reads all the data from the repository, using
@@ -61,7 +61,7 @@ defmodule Blogit.Server do
   the component processes.
 
   Every component process should retrieve the data it needs from the
-  Blogit.Server process. When there are updates, the blogit server will
+  `Blogit.Server` process. When there are updates, the blogit server will
   update its components.
   """
   @spec start_link(module) :: GenServer.on_start

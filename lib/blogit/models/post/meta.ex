@@ -12,7 +12,7 @@ defmodule Blogit.Models.Post.Meta do
   are divided using the `meta_divider`.
 
   With lower priority are files stored in a sub folder of the folder containing
-  the post markdown files, called `meta/`. If a post content is sotred in a file
+  the post markdown files, called `meta/`. If a post content is stored in a file
   called `some_post.md`, its meta-data have to be stored in a YAML file,
   located at `meta/some_post.yml`.
 

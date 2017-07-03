@@ -6,18 +6,18 @@ defmodule Blogit.Models.Post do
   the raw content of the post in markdown,
   html version of the post content and meta information.
 
-  The meta information is contained in a Blogit.Models.Post.Meta structure.
+  The meta information is contained in a `Blogit.Models.Post.Meta` structure.
 
-  Usualy a post is created by invokin the Blogit.Models.Post.from_file/2
+  Usually a post is created by invoking the `Blogit.Models.Post.from_file/2`
   function.
   This function takes a provider for access to repository, a file path and a
   repository. It uses them to read the file and generate the Post structure.
 
-  The Blogit.Models.Post.compile_posts/2 function is able to create a list
+  The `Blogit.Models.Post.compile_posts/2` function is able to create a list
   of multiple Post structures using a list of files and repository.
 
   The module contains a set of utility methods for working with
-  Blogit.Models.Post structures.
+  `Blogit.Models.Post` structures.
   """
 
   alias Blogit.Models.Post.Meta
@@ -35,7 +35,7 @@ defmodule Blogit.Models.Post do
   @doc """
   Creates a Post structure from a file stored in a repository.
 
-  The name of the file is used as the name identificator of the post.
+  The name of the file is used as the name of the post.
   For example the Post structure created from the file `some_post.md`
   will have `post.name == "some_post"`.
 
@@ -79,7 +79,7 @@ defmodule Blogit.Models.Post do
   end
 
   @doc """
-  Retrieves uniqie names, which can be used as names of posts, from a list
+  Retrieves unique names, which can be used as names of posts, from a list
   of file names.
 
   ## Examples
@@ -145,7 +145,7 @@ defmodule Blogit.Models.Post do
   The third is a counter - how many posts are created during the month
   and the year.
 
-  The tupes are sorted from the newest to the oldest, using the years
+  The tuples are sorted from the newest to the oldest, using the years
   and the months.
 
   ## Examples

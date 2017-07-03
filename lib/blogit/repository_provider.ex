@@ -10,23 +10,23 @@ defmodule Blogit.RepositoryProvider do
 
   A repository provider can be set for the Blogit OTP application using the
   configuration key `:repository_provider`. By default it is
-  Blogit.RepositoryProviders.Git.
+  `Blogit.RepositoryProviders.Git`.
 
   An example of implementing this behaviour could be a local folder.
   When a new files are added, modified and removed the
-  Blogit.RepositoryProvider.fetch/1 should have in its result the paths of
+  `Blogit.RepositoryProvider.fetch/1` should have in its result the paths of
   these files. The meta data of the file can be used as  meta data
   and creation and last update dates. The author of the file could be its owner.
   The repository structure could contain absolute path to the parent folder
   of the folder representing the repository and the
-  Blogit.RepositoryProvider.local_path/0 could return its name.
+  `Blogit.RepositoryProvider.local_path/0` could return its name.
 
-  For now Blogit comes with two implementations.
+  For now `Blogit` comes with two implementations.
 
-  Blogit.RepositoryProvider.Git provides access to Git repository and is the
+  `Blogit.RepositoryProvider.Git` provides access to Git repository and is the
   default provider if none is specified in the configuration.
 
-  Blogit.RepositoryProvider.Memory provides access to in-memory repository,
+  `Blogit.RepositoryProvider.Memory` provides access to in-memory repository,
   which can be used (and is used) mainly for testing purposes.
   """
 
@@ -46,7 +46,7 @@ defmodule Blogit.RepositoryProvider do
   @doc """
   Invoked to get representation structure of the repository the provider
   manages.
-  This structure can be passed to other callbacs in order to manage files
+  This structure can be passed to other callbacks in order to manage files
   in the repository.
   """
   @callback repository() :: repository
@@ -58,9 +58,9 @@ defmodule Blogit.RepositoryProvider do
   newest versions first.
 
   If, for example the repository is remote, all the files in it should be
-  downloaded so their most recent versions are accessable.
+  downloaded so their most recent versions are accessible.
 
-  This structure can be passed to other callbacs in order to manage files
+  This structure can be passed to other callbacks in order to manage files
   in the repository.
   """
   @callback updated_repository() :: repository
@@ -70,7 +70,7 @@ defmodule Blogit.RepositoryProvider do
   recent version.
 
   If, for example the repository is remote, all the files in it should be
-  downloaded so their most recent versions are accessable.
+  downloaded so their most recent versions are accessible.
   """
   @callback fetch(repository) :: fetch_result
 
@@ -112,7 +112,7 @@ defmodule Blogit.RepositoryProvider do
   `file_path`. If the file could not be read an error is raised.
 
   The second parameter can be a path to a folder relative to
-  Blogit.RepositoryProvider.local_path/0 in which the given `file_path` should
+  `Blogit.RepositoryProvider.local_path/0` in which the given `file_path` should
   exist.
   """
   @callback read_file!(file_path, folder) :: String.t
@@ -122,7 +122,7 @@ defmodule Blogit.RepositoryProvider do
   `file_path`.
 
   The second parameter can be a path to a folder relative to
-  Blogit.RepositoryProvider.local_path/0 in which the given `file_path` should
+  `Blogit.RepositoryProvider.local_path/0` in which the given `file_path` should
   exist.
   """
   @callback read_file(file_path, folder) :: file_read_result
@@ -132,7 +132,7 @@ defmodule Blogit.RepositoryProvider do
   `file_path`.
 
   The second parameter can be a path to a folder relative to
-  Blogit.RepositoryProvider.local_path/0 in which the given `file_path` should
+  `Blogit.RepositoryProvider.local_path/0` in which the given `file_path` should
   exist.
   """
   @callback read_meta_file(file_path, folder) :: file_read_result

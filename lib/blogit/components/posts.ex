@@ -1,16 +1,16 @@
 defmodule Blogit.Components.Posts do
   @moduledoc """
-  A component GenServer process which can be queried from outside.
-  The Blogit.Components.Posts process holds all the post in the blog as its
+  A component `GenServer` process which can be queried from outside.
+  The `Blogit.Components.Posts` process holds all the post in the blog as its
   state.
 
-  This procss handles the following `call` messages:
-  * :all -> returns all the posts of the blog as list of Blogit.Models.Post
+  This process handles the following `call` messages:
+  * :all -> returns all the posts of the blog as list of `Blogit.Models.Post`
     structures.
   * {:list, from, size} -> returns a list of posts sorted by their
     meta.created_at field, newest first. The first `from` are dropped and
     the size of the result list is specified by `size`.
-  * :list_pinned -> returns a list of Blogit.Models.Post structures, sorted
+  * :list_pinned -> returns a list of `Blogit.Models.Post` structures, sorted
     by their meta.updated_at field, newest first, only if their meta.pinned
     field is `true`.
   * {:filter, filters, from, size} -> returns a list of posts sorted by their
@@ -19,12 +19,12 @@ defmodule Blogit.Components.Posts do
   * {:by_name, name} -> returns one post by its unique name. If there is no
     post with the given `name` the atom `:error` is returned.
 
-  This component is supervised by Blogit.Components.Supervisor and added to
-  it by Blogit.Server.
+  This component is supervised by `Blogit.Components.Supervisor` and added to
+  it by `Blogit.Server`.
   When the posts get updated, this process' state is updated by the
-  Blogit.Server process.
+  `Blogit.Server` process.
 
-  The Blogit.Components.PostsByDate process calculates its state using this
+  The `Blogit.Components.PostsByDate` process calculates its state using this
   one.
   """
 
@@ -36,13 +36,13 @@ defmodule Blogit.Components.Posts do
   @doc """
   Starts the GenServer process.
 
-  The process is started and supervised by Blogit.Components.Supervisor and
-  the specification of it is added by Blogit.Server.
+  The process is started and supervised by `Blogit.Components.Supervisor` and
+  the specification of it is added by `Blogit.Server`.
 
   The state of the process in the beginning is nil. When the process becomes
-  ready to accept messages, it sends the Blogit.Server process a `:get_posts`
+  ready to accept messages, it sends the `Blogit.Server` process a `:get_posts`
   message to retrieve its state - a map with keys atoms representing the
-  unique names of the posts and values Blogit.Models.Post structures,
+  unique names of the posts and values `Blogit.Models.Post` structures,
   representing the posts.
   """
   def start_link() do

@@ -33,10 +33,10 @@ defmodule Blogit.Models.Configuration do
   Creates a Configuration structure from a file contents.
 
   The name and the location of the file are read from the configuration of
-  Blogit - the configuration property `configuration_file`.
+  `Blogit` - the configuration property `configuration_file`.
 
   If the file doesn't exist or it is invalid YML file, the structure is
-  creted using the defaults.
+  created using the defaults.
 
   The defaults are:
   * title - the name of the repository of the blog.

@@ -1,7 +1,7 @@
 defmodule Blogit.Logic.Updater do
   @moduledoc """
   Contains the function `check_updates/1` for checking for new updates using
-  a Blogit.RepositoryProvider.
+  a `Blogit.RepositoryProvider`.
 
   Checking for updates should be done in a specific process, so the main
   posts repository is not blocked while checking for updates.
@@ -17,18 +17,18 @@ defmodule Blogit.Logic.Updater do
 
   @doc """
   Checks for new updates of the state in the remote/local repository.
-  The state should contain a Blogit.RepositoryProvider structure
+  The state should contain a `Blogit.RepositoryProvider` structure
   and a repository.
 
   If there are no updates in the repository, the atom :no_updates is returned.
 
-  If there are updates in the respository, a tupple of two elements is returned:
+  If there are updates in the repository, a tuple of two elements is returned:
   {
     :updates,
     %{posts: <updated-posts-as-map>, configuration: <updated-configuration>}
   }.
 
-  This function is called in a supervised Task by the Blogit.Server process.
+  This function is called in a supervised Task by the `Blogit.Server` process.
   """
   @spec check_updates(Blogit.Server.t) :: check_updates_result
   def check_updates(state) do

@@ -13,7 +13,9 @@ defmodule Blogit.Logic.Updater do
 
   @type check_updates_result ::
     :no_updates |
-    {:updates, %{posts: %{atom => Post.t}, configuration: Configuration.t}}
+    {:updates, %{
+      posts: %{atom => Post.t}, configuration: Configuration.t
+    }}
 
   @doc """
   Checks for new updates of the state in the remote/local repository.
@@ -69,6 +71,9 @@ defmodule Blogit.Logic.Updater do
     Map.merge(current_posts, Post.compile_posts(files, repository))
   end
 
-  defp updated_blog_configuration(_, true, rp), do: Configuration.from_file(rp)
+  defp updated_blog_configuration(_, true, rp) do
+    Configuration.from_file(rp) |> List.first
+  end
+
   defp updated_blog_configuration(current, false, _), do: current
 end

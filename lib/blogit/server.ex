@@ -84,11 +84,7 @@ defmodule Blogit.Server do
   end
 
   def handle_info(:setup_components, state) do
-    [Posts, Blogit.Components.Configuration, PostsByDate]
-    |> Enum.each(fn (module) ->
-      {:ok, _} =
-        Supervisor.start_child(ComponentsSupervisor, supervisor_spec(module))
-    end)
+    setup_components(state)
 
     try_check_after_interval(@polling, @poll_interval)
 
@@ -158,7 +154,7 @@ defmodule Blogit.Server do
     repository = %Repository{repo: repo, provider: repository_provider}
 
     posts = Post.compile_posts(repository_provider.local_files, repository)
-    configuration = Configuration.from_file(repository_provider)
+    configuration = Configuration.from_file(repository_provider) |> List.first()
 
     %__MODULE__{
       repository: repository, posts: posts, configuration: configuration
@@ -168,5 +164,13 @@ defmodule Blogit.Server do
   defp try_check_after_interval(false, _), do: nil
   defp try_check_after_interval(true, interval) do
     Process.send_after(self(), :check_updates, interval)
+  end
+
+  defp setup_components(_) do
+    [Posts, Blogit.Components.Configuration, PostsByDate]
+    |> Enum.each(fn (module) ->
+      {:ok, _} =
+        Supervisor.start_child(ComponentsSupervisor, supervisor_spec(module))
+    end)
   end
 end

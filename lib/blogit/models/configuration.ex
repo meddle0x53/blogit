@@ -10,6 +10,9 @@ defmodule Blogit.Models.Configuration do
   logo_path: <path to logo for the blog>
   background_image_path: <path to image at the top of the feed as background>
   styles_path: <path to css file with custom styles for the blog>
+  languages:
+    - bg
+    - en
   ```
 
   All of these properties are optional and there are defaults for them.
@@ -17,16 +20,18 @@ defmodule Blogit.Models.Configuration do
   updated a bit.
   """
 
-  @file_conf Application.get_env(:blogit, :configuration_file, "blog.yml")
+  import Blogit.Settings
 
   @type string_or_nil :: String.t | nil
   @type t :: %__MODULE__{
     title: String.t, sub_title: string_or_nil, logo_path: string_or_nil,
-    background_image_path: string_or_nil, styles_path: string_or_nil
+    background_image_path: string_or_nil, styles_path: string_or_nil,
+    language: String.t
   }
   @enforce_keys [:title]
   defstruct [
-    :title, :logo_path, :sub_title, :background_image_path, :styles_path
+    :title, :logo_path, :sub_title, :background_image_path, :styles_path,
+    language: default_language()
   ]
 
   @doc """
@@ -44,10 +49,14 @@ defmodule Blogit.Models.Configuration do
   * local_path - nil
   * background_image_path - nil
   * styles_path - nil
+  * language - the language of the blog. by default it is the
+    default language for blogit or `"en"` if none is configured.
   """
   @spec from_file(Blogit.RepositoryProvider.provider) :: t
   def from_file(repository_provider) do
-    from_path(repository_provider.read_file(@file_conf), repository_provider)
+    from_path(
+      repository_provider.read_file(configuration_file()), repository_provider
+    )
   end
 
   @doc """
@@ -64,37 +73,49 @@ defmodule Blogit.Models.Configuration do
   """
   @spec updated?([String.t]) :: boolean
   def updated?(updates) do
-    Enum.member?(updates, @file_conf)
+    Enum.member?(updates, configuration_file())
   end
 
   defp from_path({:error, _}, repository_provider) do
-    from_defaults(repository_provider)
+    [from_defaults(repository_provider)]
   end
 
   defp from_path({:ok, data}, repository_provider) do
+    defaults = from_defaults(repository_provider)
     try do
-      from_yml(YamlElixir.read_from_string(data), repository_provider)
+      from_yml(YamlElixir.read_from_string(data), defaults)
     rescue
-      _ -> from_defaults(repository_provider)
+      _ -> [defaults]
     end
   end
 
-  defp from_yml(data, repository_provider) when is_map(data) do
-    %__MODULE__{
-      title: data["title"] || default_title(repository_provider),
-      logo_path: data["logo_path"] || nil,
-      sub_title: data["sub_title"] || nil,
-      background_image_path: data["background_image_path"] || nil,
-      styles_path: data["styles_path"] || nil
-    }
+  defp from_yml(data, template) when is_map(data) do
+    main = from_map(data, template)
+
+    languages = additional_languages(data, main)
+    additional = languages
+                 |> Enum.map(&(from_map(data[&1], %{main | language: &1})))
+    [main | additional]
   end
 
-  defp from_yml(_, repository_provider), do: from_defaults(repository_provider)
+  defp from_yml(_, template), do: template
+
+  defp from_map(data, template) when is_map(data) do
+    %__MODULE__{
+      title: data["title"] || template.title,
+      logo_path: data["logo_path"] || template.logo_path,
+      sub_title: data["sub_title"] || template.sub_title,
+      background_image_path:
+        data["background_image_path"] || template.background_image_path,
+      styles_path: data["styles_path"] || template.styles_path,
+      language: data["language"] || template.language
+    }
+  end
 
   defp from_defaults(repository_provider) do
     %__MODULE__{
       title: default_title(repository_provider), logo_path: nil, sub_title: nil,
-      background_image_path: nil
+      background_image_path: nil, styles_path: nil, language: default_language()
     }
   end
 
@@ -104,5 +125,11 @@ defmodule Blogit.Models.Configuration do
     |> String.split(~r{[^A-Za-z0-9]})
     |> Enum.map(&String.capitalize/1)
     |> Enum.join(" ")
+  end
+
+  defp additional_languages(data, template) do
+    keys = Map.keys(template) |> Enum.map(&to_string/1)
+    languages = Map.keys(data) |> Enum.reject(&(keys |> Enum.member?(&1)))
+    languages |> Enum.reject(&(&1 == template.language))
   end
 end

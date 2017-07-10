@@ -24,17 +24,18 @@ defmodule Blogit.Models.Post.Meta do
 
   @posts_folder Application.get_env(:blogit, :posts_folder, ".")
   @meta_divider Application.get_env(:blogit, :meta_divider, "--------")
+  @default_language Application.get_env(:blogit, :default_language, "en")
 
   @type t :: %__MODULE__{
     author: String.t, title: String.t, category: String.t, published: boolean,
     tags: [String.t], title_image_path: String.t, pinned: boolean,
-    year: String.t, month: String.t,
+    year: String.t, month: String.t, language: String.t,
     created_at: Calendar::NaiveDateTime.t,
     updated_at: Calendar::NaiveDateTime.t
   }
   defstruct [
     :created_at, :updated_at, :author, :title, :category, :tags, :published,
-    :title_image_path, :pinned, :year, :month
+    :title_image_path, :pinned, :year, :month, :language
   ]
 
   @doc """
@@ -121,7 +122,7 @@ defmodule Blogit.Models.Post.Meta do
       category: data["category"], year: Integer.to_string(created_at.year),
       month: Integer.to_string(created_at.month),
       title_image_path: data["title_image_path"],
-      pinned: data["pinned"] || false
+      pinned: data["pinned"] || false,
     }
   end
 

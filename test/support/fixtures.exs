@@ -18,10 +18,10 @@ defmodule Fixtures do
       category: Програма
       author: valo
       tags:
-      - elixir
-      - modules
-      - functions
-      - recursion
+        - elixir
+        - modules
+        - functions
+        - recursion
 
       <><><><><><><><>
 

@@ -78,7 +78,8 @@ defmodule Blogit.Logic.UpdaterTest do
       assert configuration == %Configuration{
         title: "Test Blog", sub_title: "Testing it now",
         logo_path: "some/image.jpg", styles_path: "some/styles.css",
-        background_image_path: "some/other_image.jpg"
+        background_image_path: "some/other_image.jpg",
+        language: ~s(bg)
       }
     end
   end

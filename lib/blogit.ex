@@ -51,6 +51,8 @@ defmodule Blogit do
 
   alias Blogit.Logic.Search
 
+  import Blogit.Settings
+
   @repository_provider Application.get_env(
     :blogit, :repository_provider, Blogit.RepositoryProviders.Git
   )
@@ -83,8 +85,9 @@ defmodule Blogit do
   By using these two arguments simple paging functionality can be implemented.
   """
   @spec list_posts(non_neg_integer, non_neg_integer) :: [Post.t]
-  def list_posts(from \\ 0, size \\ 5) do
-    GenServer.call(Posts, {:list, from, size})
+  def list_posts(from \\ 0, size \\ 5, options \\ []) do
+    name = Posts.name(options[:language] || default_language())
+    GenServer.call(name, {:list, from, size})
   end
 
   @doc """
@@ -102,7 +105,10 @@ defmodule Blogit do
   implementation.
   """
   @spec list_pinned() :: [Post.t]
-  def list_pinned(), do: GenServer.call(Posts, :list_pinned)
+  def list_pinned(options \\ []) do
+    name = Posts.name(options[:language] || default_language())
+    GenServer.call(name, :list_pinned)
+  end
 
   @doc """
   Returns a list of `Blogit.Models.Post` structures, filtered by given criteria.
@@ -128,8 +134,9 @@ defmodule Blogit do
   """
   @type filters :: %{String.t => Search.search_value}
   @spec filter_posts(filters, non_neg_integer, non_neg_integer) :: [Post.t]
-  def filter_posts(params, from \\ 0, size \\ 5) do
-    GenServer.call(Posts, {:filter, params, from, size})
+  def filter_posts(params, from \\ 0, size \\ 5, options \\ []) do
+    name = Posts.name(options[:language] || default_language())
+    GenServer.call(name, {:filter, params, from, size})
   end
 
   @doc """
@@ -140,7 +147,10 @@ defmodule Blogit do
   For more information see `Blogit.Models.Post.collect_by_year_and_month/1`.
   """
   @spec posts_by_dates() :: Post.year_month_count_result
-  def posts_by_dates, do: GenServer.call(PostsByDate, :get)
+  def posts_by_dates(options \\ []) do
+    id = PostsByDate.name(options[:language] || default_language())
+    GenServer.call(id, :get)
+  end
 
   @doc """
   Returns a single post by its unique identifiers - its `name` field.
@@ -152,14 +162,18 @@ defmodule Blogit do
   If there is no post with the given name, the atom `:error` is returned.
   """
   @spec post_by_name(atom) :: Post.t | :error
-  def post_by_name(name), do: GenServer.call(Posts, {:by_name, name})
+  def post_by_name(name, options \\ []) do
+    id = Posts.name(options[:language] || default_language())
+    GenServer.call(id, {:by_name, name})
+  end
 
   @doc """
   Retrieves the blog configuration. The configuration is in the form
   of a `Blogit.Models.Configuration` structure.
   """
   @spec configuration :: Blogit.Models.Configuration.t
-  def configuration do
-    GenServer.call(Configuration, :get)
+  def configuration(options \\ []) do
+    name = Configuration.name(options[:language] || default_language())
+    GenServer.call(name, :get)
   end
 end

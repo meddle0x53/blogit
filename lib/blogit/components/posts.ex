@@ -30,6 +30,10 @@ defmodule Blogit.Components.Posts do
 
   use GenServer
 
+  @base_name :posts
+  def base_name, do: @base_name
+  def name(language), do: :"#{base_name()}_#{language}"
+
   alias Blogit.Models.Post
   alias Blogit.Logic.Search
 
@@ -45,55 +49,57 @@ defmodule Blogit.Components.Posts do
   unique names of the posts and values `Blogit.Models.Post` structures,
   representing the posts.
   """
-  def start_link() do
-    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
+  def start_link(language \\ Blogit.Settings.default_language()) do
+    GenServer.start_link(__MODULE__, language, name: name(language))
   end
 
-  def init(_) do
+  def init(language) do
     send(self(), :init_posts)
-    {:ok, nil}
+    {:ok, %{language: language}}
   end
 
-  def handle_info(:init_posts, nil) do
-    posts = GenServer.call(Blogit.Server, :get_posts)
-    {:noreply, posts}
+  def handle_info(:init_posts, %{language: language}) do
+    posts = GenServer.call(Blogit.Server, {:get_posts, language})
+    {:noreply, %{language: language, posts: posts}}
   end
 
-  def handle_cast({:update, new_posts}, _) do
-    {:noreply, new_posts}
+  def handle_cast({:update, new_posts}, state) do
+    {:noreply, %{state | posts: new_posts}}
   end
 
-  def handle_call(:all, _from, posts) do
-    {:reply, Map.values(posts), posts}
+  def handle_call(:all, _from, %{posts: posts} = state) do
+    {:reply, Map.values(posts), state}
   end
 
-  def handle_call({:list, from, size}, _from, posts) do
+  def handle_call({:list, from, size}, _from, %{posts: posts} = state) do
     result = Map.values(posts)
              |> Post.sorted |> Enum.drop(from) |> Enum.take(size)
 
-    {:reply, result, posts}
+    {:reply, result, state}
   end
 
-  def handle_call(:list_pinned, _from, posts) do
+  def handle_call(:list_pinned, _from, %{posts: posts} = state) do
     result = Map.values(posts)
              |> Enum.filter(fn post -> post.meta.pinned end)
              |> Post.sorted(:updated_at)
              |> Enum.map(fn post -> {post.name, post.meta.title} end)
 
-    {:reply, result, posts}
+    {:reply, result, state}
   end
 
-  def handle_call({:filter, filters, from, size}, _from, posts) do
+  def handle_call(
+    {:filter, filters, from, size}, _from, %{posts: posts} = state
+  ) do
     result = Map.values(posts) |> Search.filter_by_params(filters)
              |> Post.sorted |> Enum.drop(from) |> Enum.take(size)
 
-    {:reply, result, posts}
+    {:reply, result, state}
   end
 
-  def handle_call({:by_name, name}, _from, posts) do
+  def handle_call({:by_name, name}, _from, %{posts: posts} = state) do
     case post = posts[name] do
-      nil -> {:reply, :error, posts}
-      _ -> {:reply, post, posts}
+      nil -> {:reply, :error, state}
+      _ -> {:reply, post, state}
     end
   end
 end

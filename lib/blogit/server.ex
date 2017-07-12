@@ -38,12 +38,12 @@ defmodule Blogit.Server do
   @polling Application.get_env(:blogit, :polling, true)
   @poll_interval Application.get_env(:blogit, :poll_interval, 10_000)
 
-  @enforce_keys [:repository, :posts, :configuration]
+  @enforce_keys [:repository, :posts, :configurations, :languages]
   @type t :: %__MODULE__{
     repository: Repository.t, posts: %{atom => Post.t},
-    configuration: Configuration.t
+    configurations: [Configuration.t], languages: [String.t]
   }
-  defstruct [:repository, :posts, :configuration]
+  defstruct [:repository, :posts, :configurations, :languages]
 
   ##########
   # Client #
@@ -101,13 +101,20 @@ defmodule Blogit.Server do
   def handle_info({_, :no_updates}, state), do: {:noreply, state}
 
   def handle_info(
-    {_, {:updates, %{posts: posts, configuration: configuration}}}, state
+    {_, {:updates, %{posts: posts, configurations: configurations}}}, state
   ) do
-    GenServer.cast(Posts, {:update, posts})
-    GenServer.cast(Blogit.Components.Configuration, {:update, configuration})
-    GenServer.cast(PostsByDate, :reset)
+    configurations |> Enum.each(fn configuration ->
+      name = Blogit.Components.Configuration.name(configuration.language)
+      GenServer.cast(name, {:update, configuration})
+      GenServer.cast(Posts.name(configuration.language), {:update, posts})
+      GenServer.cast(PostsByDate.name(configuration.language), :reset)
+    end)
 
-    {:noreply, %{state | posts: posts, configuration: configuration}}
+    languages = configurations |> Enum.map(&(&1.language))
+    new_state = %{state |
+      posts: posts, configurations: configurations, languages: languages
+    }
+    {:noreply, new_state}
   end
 
   def handle_info({:DOWN, _, :process, _, _}, state) do
@@ -115,12 +122,18 @@ defmodule Blogit.Server do
     {:noreply, state}
   end
 
-  def handle_call(:get_configuration, {pid, _}, %{configuration: conf} = st) do
-    ensure_caller(pid, [Blogit.Components.Configuration], conf, st)
+  def handle_call(
+    {:get_configuration, language}, {pid, _}, %{configurations: conf} = st
+  ) do
+    configuration = conf |> Enum.find(&(&1.language == language))
+    names = conf
+            |> Enum.map(&(Blogit.Components.Configuration.name(&1.language)))
+    ensure_caller(pid, names, configuration, st)
   end
 
-  def handle_call(:get_posts, {pid, _}, %{posts: posts} = state) do
-    ensure_caller(pid, [Posts, PostsByDate], posts, state)
+  def handle_call({:get_posts, language}, {pid, _}, %{posts: posts} = state) do
+    names = Blogit.Settings.languages() |> Enum.map(&(Posts.name(&1)))
+    ensure_caller(pid, names, posts, state)
   end
 
   ###########
@@ -143,10 +156,10 @@ defmodule Blogit.Server do
     end
   end
 
-  defp supervisor_spec(module) do
+  defp supervisor_spec({module, name}) do
     import Supervisor.Spec, warn: false
 
-    worker(module, [])
+    worker(module, [name], id: module.name(name))
   end
 
   defp init_state(repository_provider) do
@@ -154,10 +167,12 @@ defmodule Blogit.Server do
     repository = %Repository{repo: repo, provider: repository_provider}
 
     posts = Post.compile_posts(repository_provider.local_files, repository)
-    configuration = Configuration.from_file(repository_provider) |> List.first()
+    configurations = Configuration.from_file(repository_provider)
+    languages = configurations |> Enum.map(&(&1.language))
 
     %__MODULE__{
-      repository: repository, posts: posts, configuration: configuration
+      repository: repository, posts: posts, configurations: configurations,
+      languages: languages
     }
   end
 
@@ -166,11 +181,15 @@ defmodule Blogit.Server do
     Process.send_after(self(), :check_updates, interval)
   end
 
-  defp setup_components(_) do
-    [Posts, Blogit.Components.Configuration, PostsByDate]
-    |> Enum.each(fn (module) ->
+  defp setup_components(%{languages: languages}) do
+    components = languages |> Enum.reduce([], fn language, current ->
+      module = Blogit.Components.Configuration
+      [{module, language}, {Posts, language}, {PostsByDate, language} | current]
+    end)
+
+    components |> Enum.each(fn (component) ->
       {:ok, _} =
-        Supervisor.start_child(ComponentsSupervisor, supervisor_spec(module))
+        Supervisor.start_child(ComponentsSupervisor, supervisor_spec(component))
     end)
   end
 end

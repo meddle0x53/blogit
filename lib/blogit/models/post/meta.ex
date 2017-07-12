@@ -24,7 +24,6 @@ defmodule Blogit.Models.Post.Meta do
 
   @posts_folder Application.get_env(:blogit, :posts_folder, ".")
   @meta_divider Application.get_env(:blogit, :meta_divider, "--------")
-  @default_language Application.get_env(:blogit, :default_language, "en")
 
   @type t :: %__MODULE__{
     author: String.t, title: String.t, category: String.t, published: boolean,
@@ -123,6 +122,7 @@ defmodule Blogit.Models.Post.Meta do
       month: Integer.to_string(created_at.month),
       title_image_path: data["title_image_path"],
       pinned: data["pinned"] || false,
+      language: data["language"] || Blogit.Settings.default_language()
     }
   end
 

@@ -15,26 +15,32 @@ defmodule Blogit.Components.Configuration do
 
   use GenServer
 
-  def start_link() do
-    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
+  @base_name :configuration
+
+  def base_name, do: @base_name
+  def name(language), do: :"#{base_name()}_#{language}"
+
+  def start_link(language \\ Blogit.Settings.default_language()) do
+    GenServer.start_link(__MODULE__, language, name: name(language))
   end
 
-  def init(_) do
+  def init(language) do
     send(self(), :init_configuration)
-    {:ok, nil}
+    {:ok, %{language: language}}
   end
 
-  def handle_info(:init_configuration, nil) do
-    configuration = GenServer.call(Blogit.Server, :get_configuration)
+  def handle_info(:init_configuration, %{language: language}) do
+    configuration =
+      GenServer.call(Blogit.Server, {:get_configuration, language})
 
-    {:noreply, configuration}
+    {:noreply, %{language: language, configuration: configuration}}
   end
 
-  def handle_cast({:update, new_configuration}, _) do
-    {:noreply, new_configuration}
+  def handle_cast({:update, new_configuration}, state) do
+    {:noreply, %{state | configuration: new_configuration}}
   end
 
-  def handle_call(:get, _from, configuration) do
-    {:reply, configuration, configuration}
+  def handle_call(:get, _from, %{configuration: configuration} = state) do
+    {:reply, configuration, state}
   end
 end

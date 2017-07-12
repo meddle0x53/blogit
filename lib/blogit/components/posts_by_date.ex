@@ -16,6 +16,11 @@ defmodule Blogit.Components.PostsByDate do
 
   use GenServer
 
+  @base_name :post_by_name
+
+  def base_name, do: @base_name
+  def name(language), do: :"#{base_name()}_#{language}"
+
   alias Blogit.Models.Post
   alias Blogit.Components.Posts
 
@@ -29,20 +34,27 @@ defmodule Blogit.Components.PostsByDate do
   `:get` message is received as a 'call', the state is computed using the
   state of the `Blogit.Components.Posts` process.
   """
-  def start_link() do
-    GenServer.start_link(__MODULE__, nil, name: __MODULE__)
+  def start_link(language \\ Blogit.Settings.default_language()) do
+    GenServer.start_link(__MODULE__, language, name: name(language))
   end
 
-  def handle_cast(:reset, _), do: {:noreply, nil}
+  def init(language) do
+    {:ok, %{language: language, posts_by_dates: nil}}
+  end
 
-  def handle_call(:get, _from, nil) do
-    posts = GenServer.call(Posts, :all)
+  def handle_cast(:reset, %{language: language}) do
+    {:noreply, %{language: language, posts_by_dates: nil}}
+  end
+
+  def handle_call(:get, _from, %{posts_by_dates: nil, language: language}) do
+    posts = GenServer.call(Posts.name(language), :all)
 
     posts_by_dates = Post.collect_by_year_and_month(posts)
-    {:reply, posts_by_dates, posts_by_dates}
+    state = %{language: language, posts_by_dates: posts_by_dates}
+    {:reply, posts_by_dates, state}
   end
 
-  def handle_call(:get, _from, posts_by_dates) do
-    {:reply, posts_by_dates, posts_by_dates}
+  def handle_call(:get, _from, %{posts_by_dates: posts_by_dates} = state) do
+    {:reply, posts_by_dates, state}
   end
 end

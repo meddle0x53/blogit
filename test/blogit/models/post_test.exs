@@ -31,7 +31,7 @@ defmodule Blogit.Models.PostTest do
         pinned: false, published: true,
         created_at: ~N[2017-06-21 08:46:50],
         updated_at: ~N[2017-04-22 13:15:32],
-        year: "2017", month: "6"
+        year: "2017", month: "6", language: "bg"
       }
     end
   end
@@ -59,7 +59,7 @@ defmodule Blogit.Models.PostTest do
             category: nil, created_at: ~N[2017-05-30 21:26:49],
             pinned: false, published: true, tags: [], title: "Title",
             title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32],
-            year: "2017", month: "5"
+            year: "2017", month: "5", language: "bg"
           }
         },
         processes: %Post{
@@ -71,7 +71,7 @@ defmodule Blogit.Models.PostTest do
             created_at: ~N[2017-06-21 08:46:50], pinned: false,
             published: true, tags: [], title: "Processes",
             title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32],
-            year: "2017", month: "6"
+            year: "2017", month: "6", language: "bg"
           }
         }
       }

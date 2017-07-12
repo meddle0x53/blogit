@@ -30,17 +30,16 @@ defmodule Blogit.Models.ConfigurationTest do
       logo_path: some/image.jpg
       styles_path: some/styles.css
       background_image_path: some/other_image.jpg
-      language: bg
       """
       repository.provider.add_file("blog.yml", yml)
 
       configuration = Configuration.from_file(repository.provider)
-      assert configuration == [%Configuration{
+      assert List.first(configuration) == %Configuration{
         title: "Test Blog", sub_title: "Testing it now",
         logo_path: "some/image.jpg", styles_path: "some/styles.css",
         background_image_path: "some/other_image.jpg",
         language: ~s[bg]
-      }]
+      }
     end
 
     test """
@@ -55,21 +54,22 @@ defmodule Blogit.Models.ConfigurationTest do
       repository.provider.add_file("blog.yml", yml)
 
       configuration = Configuration.from_file(repository.provider)
-      assert configuration == [%Configuration{
+      assert List.first(configuration) == %Configuration{
         title: "Memory", sub_title: "Testing it now",
         logo_path: "some/image.jpg", styles_path: "some/styles.css",
-        language: ~s(bg)
-      }]
+      }
     end
 
     test "TODO", %{repository: repository} do
+      current_languages = Blogit.Settings.languages()
+      Application.put_env(:blogit, :languages, ~w(en bg de))
+
       yml = """
       title: Test blog
       sub_title: Testing it with languages
       logo_path: some/image.jpg
       styles_path: some/styles.css
       background_image_path: some/other_image.jpg
-      language: en
       bg:
         title: Тестов блог
         sub_title: С езици
@@ -101,6 +101,8 @@ defmodule Blogit.Models.ConfigurationTest do
       }
 
       assert configuration == [en, bg, de]
+
+      Application.put_env(:blogit, :languages, current_languages)
     end
   end
 end

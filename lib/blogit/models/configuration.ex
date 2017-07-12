@@ -49,8 +49,8 @@ defmodule Blogit.Models.Configuration do
   * local_path - nil
   * background_image_path - nil
   * styles_path - nil
-  * language - the language of the blog. by default it is the
-    default language for blogit or `"en"` if none is configured.
+  * language - the language of the blog. By default it is the
+    default language for Blogit or `"en"` if none is configured.
   """
   @spec from_file(Blogit.RepositoryProvider.provider) :: t
   def from_file(repository_provider) do
@@ -92,9 +92,9 @@ defmodule Blogit.Models.Configuration do
   defp from_yml(data, template) when is_map(data) do
     main = from_map(data, template)
 
-    languages = additional_languages(data, main)
-    additional = languages
-                 |> Enum.map(&(from_map(data[&1], %{main | language: &1})))
+    additional = additional_languages() |> Enum.map(
+                   &(from_map(data[&1] || %{}, %{main | language: &1}))
+                 )
     [main | additional]
   end
 
@@ -127,9 +127,8 @@ defmodule Blogit.Models.Configuration do
     |> Enum.join(" ")
   end
 
-  defp additional_languages(data, template) do
-    keys = Map.keys(template) |> Enum.map(&to_string/1)
-    languages = Map.keys(data) |> Enum.reject(&(keys |> Enum.member?(&1)))
-    languages |> Enum.reject(&(&1 == template.language))
+  defp additional_languages() do
+    [_ | rest] = languages()
+    rest
   end
 end

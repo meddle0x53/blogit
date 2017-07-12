@@ -13,10 +13,11 @@ defmodule Blogit.Logic.UpdaterTest do
   describe ".check_updates" do
     setup %{repository: repository} do
       posts = Post.compile_posts(repository.provider.local_files, repository)
-      configuration = Configuration.from_file(repository.provider)
+      configurations = Configuration.from_file(repository.provider)
       %{
         state: %Blogit.Server{
-          repository: repository, posts: posts, configuration: configuration
+          repository: repository, posts: posts, configurations: configurations,
+          languages: configurations |> Enum.map(&(&1.language))
         }
       }
     end
@@ -71,11 +72,13 @@ defmodule Blogit.Logic.UpdaterTest do
       logo_path: some/image.jpg
       styles_path: some/styles.css
       background_image_path: some/other_image.jpg
+      language: bg
       """
       Memory.add_file("blog.yml", yml)
-      {:updates, %{configuration: configuration}} = Updater.check_updates(state)
+      {:updates, %{configurations: configurations}} =
+        Updater.check_updates(state)
 
-      assert configuration == %Configuration{
+      assert List.first(configurations) == %Configuration{
         title: "Test Blog", sub_title: "Testing it now",
         logo_path: "some/image.jpg", styles_path: "some/styles.css",
         background_image_path: "some/other_image.jpg",

@@ -182,10 +182,10 @@ defmodule BlogitTest do
     test "the state of the process is all the blog data - " <>
     "the posts and the configuration" do
       %{
-        configuration: configuration, posts: posts, repository: repository
+        configurations: configurations, posts: posts, repository: repository
       } = :sys.get_state(Blogit.Server)
 
-      assert configuration == %Blogit.Models.Configuration{ title: "Memory"}
+      assert configurations == [%Blogit.Models.Configuration{ title: "Memory"}]
       assert Map.keys(posts) == [
        :control_flow_and_errors, :mix, :modules_functions_recursion, :nodes,
        :otp, :plug, :processes

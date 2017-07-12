@@ -14,7 +14,7 @@ defmodule Blogit.Logic.Updater do
   @type check_updates_result ::
     :no_updates |
     {:updates, %{
-      posts: %{atom => Post.t}, configuration: Configuration.t
+      posts: %{atom => Post.t}, configurations: [Configuration.t]
     }}
 
   @doc """
@@ -43,13 +43,13 @@ defmodule Blogit.Logic.Updater do
   defp update(updates, state) do
     posts = updated_posts(state.posts, updates, state.repository)
     posts = updated_posts_by_meta(posts, updates, state.repository)
-    configuration = updated_blog_configuration(
-      state.configuration,
+    configurations = updated_blog_configuration(
+      state.configurations,
       Configuration.updated?(updates),
       state.repository.provider
     )
 
-    {:updates, %{posts: posts, configuration: configuration}}
+    {:updates, %{posts: posts, configurations: configurations}}
   end
 
   defp updated_posts(current_posts, updates, repository) do
@@ -72,7 +72,7 @@ defmodule Blogit.Logic.Updater do
   end
 
   defp updated_blog_configuration(_, true, rp) do
-    Configuration.from_file(rp) |> List.first
+    Configuration.from_file(rp)
   end
 
   defp updated_blog_configuration(current, false, _), do: current

@@ -106,7 +106,10 @@ defmodule Blogit.Server do
     configurations |> Enum.each(fn configuration ->
       name = Blogit.Components.Configuration.name(configuration.language)
       GenServer.cast(name, {:update, configuration})
-      GenServer.cast(Posts.name(configuration.language), {:update, posts})
+      GenServer.cast(
+        Posts.name(configuration.language),
+        {:update, posts[configuration.language]}
+      )
       GenServer.cast(PostsByDate.name(configuration.language), :reset)
     end)
 
@@ -133,7 +136,7 @@ defmodule Blogit.Server do
 
   def handle_call({:get_posts, language}, {pid, _}, %{posts: posts} = state) do
     names = Blogit.Settings.languages() |> Enum.map(&(Posts.name(&1)))
-    ensure_caller(pid, names, posts, state)
+    ensure_caller(pid, names, posts[language], state)
   end
 
   ###########
@@ -166,7 +169,7 @@ defmodule Blogit.Server do
     repo = repository_provider.updated_repository
     repository = %Repository{repo: repo, provider: repository_provider}
 
-    posts = Post.compile_posts(repository_provider.local_files, repository)
+    posts = Post.compile_posts(repository_provider.local_files(), repository)
     configurations = Configuration.from_file(repository_provider)
     languages = configurations |> Enum.map(&(&1.language))
 

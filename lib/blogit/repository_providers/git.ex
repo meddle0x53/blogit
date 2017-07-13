@@ -35,7 +35,6 @@ defmodule Blogit.RepositoryProviders.Git do
               |> String.split("/")
               |> List.last
               |> String.trim_trailing(".git")
-  @posts_folder Application.get_env(:blogit, :posts_folder, ".")
 
   #############
   # Behaviour #
@@ -76,7 +75,15 @@ defmodule Blogit.RepositoryProviders.Git do
   end
 
   def local_path, do: @local_path
-  def local_files, do: File.ls!(Path.join(@local_path, @posts_folder))
+
+  def local_files do
+    path = Path.join(@local_path, Blogit.Settings.posts_folder())
+    size = byte_size(path) + 1
+
+    recursive_ls(path)
+    |> Enum.map(fn << path::binary-size(size), rest::binary >> -> rest end)
+  end
+
   def file_in?(file), do: File.exists?(Path.join(@local_path, file))
 
   def file_author(repository, file_name) do
@@ -120,5 +127,17 @@ defmodule Blogit.RepositoryProviders.Git do
 
   defp first_in_log(repository, args) do
     log(repository, args) |> String.split("\n") |> List.first |> String.trim
+  end
+
+  defp recursive_ls(path) do
+    cond do
+      File.regular?(path) -> [path]
+      File.dir?(path) ->
+        File.ls!(path)
+        |> Enum.map(&Path.join(path, &1))
+        |> Enum.map(&recursive_ls/1)
+        |> Enum.concat
+      true -> []
+    end
   end
 end

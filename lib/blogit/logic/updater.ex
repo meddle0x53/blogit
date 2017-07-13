@@ -42,7 +42,6 @@ defmodule Blogit.Logic.Updater do
 
   defp update(updates, state) do
     posts = updated_posts(state.posts, updates, state.repository)
-    posts = updated_posts_by_meta(posts, updates, state.repository)
     configurations = updated_blog_configuration(
       state.configurations,
       Configuration.updated?(updates),
@@ -54,21 +53,30 @@ defmodule Blogit.Logic.Updater do
 
   defp updated_posts(current_posts, updates, repository) do
     new_files = Enum.filter(updates, &repository.provider.file_in?/1)
-    deleted_posts = (updates -- new_files)
-                    |> Post.names_from_files |> Enum.map(&String.to_atom/1)
-    current_posts
-    |> Map.merge(Post.compile_posts(new_files, repository))
-    |> Map.drop(deleted_posts)
-  end
+    deleted_posts = filter_post_updates(updates -- new_files)
+                    |> Post.names_from_files
 
-  defp updated_posts_by_meta(current_posts, updates, repository) do
-    files = updates |> Enum.filter(fn (f) ->
-      String.starts_with?(f, Meta.folder) && String.ends_with?(f, ".yml")
-    end) |> Enum.map(fn (f) ->
-      f |> String.replace("meta/", "") |> String.replace_suffix("yml", "md")
+    new_files = filter_post_updates(new_files)
+    new_posts = current_posts
+    |> Map.merge(Post.compile_posts(new_files, repository), fn _, m1, m2 ->
+      Map.merge(m1, m2)
     end)
 
-    Map.merge(current_posts, Post.compile_posts(files, repository))
+    Enum.reduce(deleted_posts, new_posts, fn {lang, name}, current ->
+      Map.put(current, lang, Map.delete(Map.get(current, lang), name))
+    end)
+  end
+
+  defp filter_post_updates(updates) do
+    updates
+    |> Enum.map(&Path.split/1)
+    |> Enum.filter_map(fn path ->
+        [prefix | _] = path
+        prefix == Blogit.Settings.posts_folder()
+      end, fn path ->
+        [_ | rest] = path
+        Path.join(rest)
+      end)
   end
 
   defp updated_blog_configuration(_, true, rp) do

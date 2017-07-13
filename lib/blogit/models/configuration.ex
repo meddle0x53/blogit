@@ -126,9 +126,4 @@ defmodule Blogit.Models.Configuration do
     |> Enum.map(&String.capitalize/1)
     |> Enum.join(" ")
   end
-
-  defp additional_languages() do
-    [_ | rest] = languages()
-    rest
-  end
 end

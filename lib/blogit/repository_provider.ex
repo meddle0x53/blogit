@@ -52,6 +52,15 @@ defmodule Blogit.RepositoryProvider do
   @callback repository() :: repository
 
   @doc """
+  Invoked to update the data represented by the given `repository` to its most
+  recent version.
+
+  If, for example the repository is remote, all the files in it should be
+  downloaded so their most recent versions are accessible.
+  """
+  @callback fetch(repository) :: fetch_result
+
+  @doc """
   Invoked to get a representation structure of the repository the provider
   manages.
   All the actual data represented by this structure will be updated to its
@@ -64,15 +73,6 @@ defmodule Blogit.RepositoryProvider do
   in the repository.
   """
   @callback updated_repository() :: repository
-
-  @doc """
-  Invoked to update the data represented by the given `repository` to its most
-  recent version.
-
-  If, for example the repository is remote, all the files in it should be
-  downloaded so their most recent versions are accessible.
-  """
-  @callback fetch(repository) :: fetch_result
 
   @doc """
   Invoked to get the path to the locally downloaded data.

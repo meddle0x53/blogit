@@ -22,8 +22,8 @@ defmodule Blogit.Models.Post do
 
   alias Blogit.Models.Post.Meta
   alias Blogit.RepositoryProvider, as: Repository
+  import Blogit.Settings
 
-  @posts_folder Application.get_env(:blogit, :posts_folder, "")
   @meta_divider Application.get_env(:blogit, :meta_divider, "--------")
 
   @type t :: %__MODULE__{
@@ -42,10 +42,10 @@ defmodule Blogit.Models.Post do
   The given file path should be located in the given repository.
   """
   @spec from_file(String.t, Repository.t) :: t
-  def from_file(file_path, repository) do
-    name = name_from_file(file_path)
+  def from_file(file_path, repository, language \\ "bg") do
+    name = name_from_file(file_path, language)
 
-    raw = repository.provider.read_file!(file_path, @posts_folder)
+    raw = repository.provider.read_file!(file_path, posts_folder())
     data = String.split(raw, @meta_divider, trim: true)
            |> Enum.map(&String.trim/1)
 
@@ -53,7 +53,7 @@ defmodule Blogit.Models.Post do
       Earmark.as_html!(String.replace(List.last(data), ~r/^\s*\#\s*.+/, ""))
 
     meta =
-      Meta.from_file(file_path, repository, raw, name)
+      Meta.from_file(file_path, repository, raw, name, language)
 
     %__MODULE__{name: name, raw: raw, html: html, meta: meta}
   end
@@ -69,13 +69,26 @@ defmodule Blogit.Models.Post do
   """
   @spec compile_posts([String.t], Repository.t) :: %{atom => t}
   def compile_posts(list, repository) when is_list(list) do
-    list
+    file_paths = list
     |> Enum.filter(fn(f) -> String.ends_with?(f, ".md") end)
-    |> Enum.reject(fn(f) -> String.starts_with?(f, "slides/") end)
-    |> Enum.reject(fn(f) -> String.starts_with?(f, "pages/") end)
-    |> Enum.map(fn(file) -> from_file(file, repository) end)
-    |> Enum.map(fn(post) -> {String.to_atom(post.name), post} end)
-    |> Enum.into(%{})
+    |> Enum.map(&Path.split/1)
+
+    primary_language = default_language()
+    languages() |> Enum.reduce(%{}, fn language, current ->
+      paths = file_paths
+      |> Enum.filter(fn path ->
+        [prefix | _] = path
+
+        prefix == language ||
+          (language == primary_language && !Enum.member?(languages(), prefix))
+      end)
+      |> Enum.map(&Path.join/1)
+      |> Enum.map(fn(file) -> from_file(file, repository, language) end)
+      |> Enum.map(fn(post) -> {String.to_atom(post.name), post} end)
+      |> Enum.into(%{})
+
+      Map.put(current, language, paths)
+    end)
   end
 
   @doc """
@@ -94,7 +107,14 @@ defmodule Blogit.Models.Post do
   def names_from_files(files) do
     files
     |> Enum.filter(fn(f) -> String.ends_with?(f, ".md") end)
-    |> Enum.map(&name_from_file/1)
+    |> Enum.map(fn path ->
+      [prefix | _] = Path.split(path)
+
+      {languages() |> Enum.find(default_language(), &(prefix == &1)), path}
+    end)
+    |> Enum.map(fn {lang, path} ->
+      {lang, name_from_file(path, lang) |> String.to_atom()}
+    end)
   end
 
   @doc """
@@ -201,9 +221,10 @@ defmodule Blogit.Models.Post do
   # Private #
   ###########
 
-  defp name_from_file(file_name) do
+  defp name_from_file(file_name, language \\ "bg") do
     file_name
     |> Path.split
+    |> Enum.filter(&(&1 != language))
     |> Enum.join("_")
     |> String.downcase
     |> String.trim_trailing(".md")

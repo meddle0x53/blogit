@@ -8,7 +8,6 @@ defmodule Blogit.Logic.Updater do
   """
 
   alias Blogit.Models.Post
-  alias Blogit.Models.Post.Meta
   alias Blogit.Models.Configuration
 
   @type check_updates_result ::

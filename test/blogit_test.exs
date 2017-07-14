@@ -183,10 +183,12 @@ defmodule BlogitTest do
     test "the state of the process is all the blog data - " <>
     "the posts and the configuration" do
       %{
-        configurations: configurations, posts: posts, repository: repository
+        configurations: configuration, posts: posts, repository: repository
       } = :sys.get_state(Blogit.Server)
 
-      assert configurations == [%Blogit.Models.Configuration{ title: "Memory"}]
+      assert configuration == Blogit.Settings.languages() |> Enum.map(fn lang ->
+        %Blogit.Models.Configuration{title: "Memory", language: lang}
+      end)
       assert posts |> Map.values |> Enum.map(&Map.keys/1) |> List.flatten() == [
        :control_flow_and_errors, :mix, :modules_functions_recursion, :nodes,
        :otp, :plug, :processes

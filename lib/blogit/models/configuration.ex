@@ -77,7 +77,7 @@ defmodule Blogit.Models.Configuration do
   end
 
   defp from_path({:error, _}, repository_provider) do
-    [from_defaults(repository_provider)]
+    default_result(from_defaults(repository_provider))
   end
 
   defp from_path({:ok, data}, repository_provider) do
@@ -85,7 +85,7 @@ defmodule Blogit.Models.Configuration do
     try do
       from_yml(YamlElixir.read_from_string(data), defaults)
     rescue
-      _ -> [defaults]
+      _ -> default_result(defaults)
     end
   end
 
@@ -125,5 +125,11 @@ defmodule Blogit.Models.Configuration do
     |> String.split(~r{[^A-Za-z0-9]})
     |> Enum.map(&String.capitalize/1)
     |> Enum.join(" ")
+  end
+
+  defp default_result(defaults) do
+    Blogit.Settings.languages() |> Enum.map(fn language ->
+      Map.put(defaults, :language, language)
+    end)
   end
 end

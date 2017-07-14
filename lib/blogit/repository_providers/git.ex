@@ -81,7 +81,7 @@ defmodule Blogit.RepositoryProviders.Git do
     size = byte_size(path) + 1
 
     recursive_ls(path)
-    |> Enum.map(fn << path::binary-size(size), rest::binary >> -> rest end)
+    |> Enum.map(fn << _::binary-size(size), rest::binary >> -> rest end)
   end
 
   def file_in?(file), do: File.exists?(Path.join(@local_path, file))

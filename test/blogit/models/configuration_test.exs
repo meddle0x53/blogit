@@ -11,7 +11,9 @@ defmodule Blogit.Models.ConfigurationTest do
     %{repository: repository} do
       configuration = Configuration.from_file(repository.provider)
 
-      assert configuration == [%Configuration{title: "Memory"}]
+      assert configuration == Blogit.Settings.languages() |> Enum.map(fn lang ->
+        %Configuration{title: "Memory", language: lang}
+      end)
     end
 
     test "returns a default configuration if the file is invalid YML file",

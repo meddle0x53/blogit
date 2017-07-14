@@ -38,12 +38,12 @@ defmodule Blogit.Server do
   @polling Application.get_env(:blogit, :polling, true)
   @poll_interval Application.get_env(:blogit, :poll_interval, 10_000)
 
-  @enforce_keys [:repository, :posts, :configurations, :languages]
+  @enforce_keys [:repository, :posts, :configurations]
   @type t :: %__MODULE__{
     repository: Repository.t, posts: %{atom => Post.t},
-    configurations: [Configuration.t], languages: [String.t]
+    configurations: [Configuration.t]
   }
-  defstruct [:repository, :posts, :configurations, :languages]
+  defstruct [:repository, :posts, :configurations]
 
   ##########
   # Client #
@@ -84,7 +84,7 @@ defmodule Blogit.Server do
   end
 
   def handle_info(:setup_components, state) do
-    setup_components(state)
+    setup_components()
 
     try_check_after_interval(@polling, @poll_interval)
 
@@ -113,11 +113,7 @@ defmodule Blogit.Server do
       GenServer.cast(PostsByDate.name(configuration.language), :reset)
     end)
 
-    languages = configurations |> Enum.map(&(&1.language))
-    new_state = %{state |
-      posts: posts, configurations: configurations, languages: languages
-    }
-    {:noreply, new_state}
+    {:noreply, %{state | posts: posts, configurations: configurations}}
   end
 
   def handle_info({:DOWN, _, :process, _, _}, state) do
@@ -171,11 +167,9 @@ defmodule Blogit.Server do
 
     posts = Post.compile_posts(repository_provider.local_files(), repository)
     configurations = Configuration.from_file(repository_provider)
-    languages = configurations |> Enum.map(&(&1.language))
 
     %__MODULE__{
-      repository: repository, posts: posts, configurations: configurations,
-      languages: languages
+      repository: repository, posts: posts, configurations: configurations
     }
   end
 
@@ -184,7 +178,8 @@ defmodule Blogit.Server do
     Process.send_after(self(), :check_updates, interval)
   end
 
-  defp setup_components(%{languages: languages}) do
+  defp setup_components do
+    languages = Blogit.Settings.languages()
     components = languages |> Enum.reduce([], fn language, current ->
       module = Blogit.Components.Configuration
       [{module, language}, {Posts, language}, {PostsByDate, language} | current]

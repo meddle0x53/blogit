@@ -223,7 +223,7 @@ defmodule Blogit.Models.Post do
   # Private #
   ###########
 
-  defp name_from_file(file_name, language \\ "bg") do
+  defp name_from_file(file_name, language) do
     file_name
     |> Path.split
     |> Enum.filter(&(&1 != language))

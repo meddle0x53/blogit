@@ -24,8 +24,7 @@ defmodule Blogit.Logic.UpdaterTest do
       configurations = Configuration.from_file(repository.provider)
       %{
         state: %Blogit.Server{
-          repository: repository, posts: posts, configurations: configurations,
-          languages: configurations |> Enum.map(&(&1.language))
+          repository: repository, posts: posts, configurations: configurations
         }
       }
     end

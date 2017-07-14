@@ -17,7 +17,8 @@ defmodule Blogit.Models.Post.MetaTest do
   describe ".from_file" do
     test "uses repository data if no meta is found",
     %{repository: %{provider: provider} = repository} do
-      meta = Meta.from_file("processes.md", repository, "", "processes")
+      lang = Blogit.Settings.default_language()
+      meta = Meta.from_file("processes.md", repository, "", "processes", lang)
 
       assert meta.author == provider.file_author(nil, "processes.md")
 
@@ -34,7 +35,8 @@ defmodule Blogit.Models.Post.MetaTest do
     as meta or the content doesn't have title header
     """, %{repository: repository} do
       meta = Meta.from_file(
-      "control_flow_and_errors.md", repository, "", "control_flow_and_errors"
+        "control_flow_and_errors.md", repository, "", "control_flow_and_errors",
+        Blogit.Settings.default_language()
       )
 
       assert meta.title == "Control Flow And Errors"
@@ -42,7 +44,8 @@ defmodule Blogit.Models.Post.MetaTest do
 
     test "uses defaults if no meta data can be found",
     %{repository: repository} do
-      meta = Meta.from_file("processes.md", repository, "", "processes")
+      lang = Blogit.Settings.default_language()
+      meta = Meta.from_file("processes.md", repository, "", "processes", lang)
 
       assert meta.tags == []
       assert meta.published == true
@@ -55,7 +58,7 @@ defmodule Blogit.Models.Post.MetaTest do
     %{repository: repository} do
       meta = Meta.from_file(
         "modules_functions_recursion.md", repository,
-        "", "modules_functions_recursion"
+        "", "modules_functions_recursion", Blogit.Settings.default_language()
       )
 
       assert meta.pinned == true
@@ -81,7 +84,7 @@ defmodule Blogit.Models.Post.MetaTest do
       """
       meta = Meta.from_file(
         "modules_functions_recursion.md", repository,
-        raw, "modules_functions_recursion"
+        raw, "modules_functions_recursion", Blogit.Settings.default_language()
       )
 
       assert meta.author == "valo"
@@ -97,7 +100,7 @@ defmodule Blogit.Models.Post.MetaTest do
       """
       meta = Meta.from_file(
         "modules_functions_recursion.md", repository,
-        raw, "modules_functions_recursion"
+        raw, "modules_functions_recursion", Blogit.Settings.default_language()
       )
 
       assert meta.title == "Модули, функции и рекурсия"
@@ -114,7 +117,7 @@ defmodule Blogit.Models.Post.MetaTest do
       """
       meta = Meta.from_file(
         "modules_functions_recursion.md", repository,
-        raw, "modules_functions_recursion"
+        raw, "modules_functions_recursion", Blogit.Settings.default_language()
       )
 
       assert meta.category == "Програма"

@@ -9,7 +9,8 @@ defmodule Blogit.Models.PostTest do
 
   describe ".from_file" do
     setup %{repository: repository} = context do
-      post = Post.from_file("processes.md", repository)
+      lang = Blogit.Settings.default_language()
+      post = Post.from_file("processes.md", repository, lang)
       Map.put(context, :post, post)
     end
 

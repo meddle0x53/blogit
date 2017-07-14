@@ -41,8 +41,8 @@ defmodule Blogit.Models.Post.Meta do
   Creates a Post.Meta structure using the source file of a Post, its raw data
   and the repository containing the blog data.
   """
-  @spec from_file(String.t, Repository.t, String.t, String.t) :: t
-  def from_file(file_path, repository, raw, name, language \\ "bg") do
+  @spec from_file(String.t, Repository.t, String.t, String.t, String.t) :: t
+  def from_file(file_path, repository, raw, name, language) do
     create_meta(
       repository.provider.read_meta_file(file_path, posts_folder()), file_path,
       repository, raw, name, language

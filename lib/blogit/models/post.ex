@@ -41,8 +41,8 @@ defmodule Blogit.Models.Post do
 
   The given file path should be located in the given repository.
   """
-  @spec from_file(String.t, Repository.t) :: t
-  def from_file(file_path, repository, language \\ "bg") do
+  @spec from_file(String.t, Repository.t, String.t) :: t
+  def from_file(file_path, repository, language) do
     name = name_from_file(file_path, language)
 
     raw = repository.provider.read_file!(file_path, posts_folder())

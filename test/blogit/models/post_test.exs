@@ -49,32 +49,40 @@ defmodule Blogit.Models.PostTest do
       </li>\n<li>i2\n</li>\n</ul>
       """
 
-      assert posts == %{
-        mix: %Post{
-          name: "mix",
-          html: mix_html,
-          raw: "# Title\n Some text...\n## Section 1\n Hey!!\n* i1\n * i2",
-          meta: %Meta{
-            author: "Reductions",
-            category: nil, created_at: ~N[2017-05-30 21:26:49],
-            pinned: false, published: true, tags: [], title: "Title",
-            title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32],
-            year: "2017", month: "5", language: "bg"
-          }
-        },
-        processes: %Post{
-          name: "processes",
-          html: "<p>Stuff</p>\n",
-          raw: "Stuff",
-          meta: %Meta{
-            author: "meddle", category: nil,
-            created_at: ~N[2017-06-21 08:46:50], pinned: false,
-            published: true, tags: [], title: "Processes",
-            title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32],
-            year: "2017", month: "6", language: "bg"
+      expected = %{
+        Blogit.Settings.default_language() => %{
+          mix: %Post{
+            name: "mix",
+            html: mix_html,
+            raw: "# Title\n Some text...\n## Section 1\n Hey!!\n* i1\n * i2",
+            meta: %Meta{
+              author: "Reductions",
+              category: nil, created_at: ~N[2017-05-30 21:26:49],
+              pinned: false, published: true, tags: [], title: "Title",
+              title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32],
+              year: "2017", month: "5", language: "bg"
+            }
+          },
+          processes: %Post{
+            name: "processes",
+            html: "<p>Stuff</p>\n",
+            raw: "Stuff",
+            meta: %Meta{
+              author: "meddle", category: nil,
+              created_at: ~N[2017-06-21 08:46:50], pinned: false,
+              published: true, tags: [], title: "Processes",
+              title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32],
+              year: "2017", month: "6", language: "bg"
+            }
           }
         }
       }
+
+      expected = Blogit.Settings.additional_languages()
+      |> Enum.reduce(expected, fn language, current ->
+        Map.put(current, language, %{})
+      end)
+      assert posts == expected
     end
   end
 end

@@ -19,10 +19,11 @@ defmodule BlogitTest do
 
     :sys.get_state(Process.whereis(Blogit.Server))
 
+    path = &(Path.join(Blogit.Settings.posts_folder(), &1.path))
     Agent.update(Memory, fn data ->
       %{data |
         raw_posts: Fixtures.posts(),
-        updates: Enum.map(Fixtures.posts(), &(&1.path))
+        updates: Enum.map(Fixtures.posts(), path)
       }
     end)
 
@@ -186,7 +187,7 @@ defmodule BlogitTest do
       } = :sys.get_state(Blogit.Server)
 
       assert configurations == [%Blogit.Models.Configuration{ title: "Memory"}]
-      assert Map.keys(posts) == [
+      assert posts |> Map.values |> Enum.map(&Map.keys/1) |> List.flatten() == [
        :control_flow_and_errors, :mix, :modules_functions_recursion, :nodes,
        :otp, :plug, :processes
       ]

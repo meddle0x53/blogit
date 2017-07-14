@@ -8,7 +8,15 @@ defmodule Blogit.Logic.UpdaterTest do
 
   alias Blogit.RepositoryProviders.Memory
 
-  setup do: Fixtures.posts_in_memory()
+  setup do
+    Application.ensure_all_started(:yaml_elixir)
+
+    on_exit fn ->
+      Application.stop(:yaml_elixir)
+    end
+
+    Fixtures.posts_in_memory()
+  end
 
   describe ".check_updates" do
     setup %{repository: repository} do
@@ -29,13 +37,14 @@ defmodule Blogit.Logic.UpdaterTest do
     end
 
     test """
-    if there are new posts they are added to the posts of state and returned
-    as part of the tupple {:updates, <new-state>}
+    if there are new posts they are added to the posts of the given `state`
+    and returned as part of the tupple {:updates, <new-state>}
     """, %{state: state} do
       Memory.add_post(%Memory.RawPost{author: "valo", path: "meta_one.md"})
       {:updates, %{posts: posts}} = Updater.check_updates(state)
+      names = Map.keys(posts[Blogit.Settings.default_language()])
 
-      assert Enum.member?(Map.keys(posts), :meta_one)
+      assert Enum.member?(names, :meta_one)
     end
 
     test """
@@ -49,15 +58,17 @@ defmodule Blogit.Logic.UpdaterTest do
     end
 
     test """
-    if a post was updated it is updated in the state returned as part of the
-    tuple {:updated, <new-state>}
+    if a post was updated its state becomes the new-state returned as part of
+    the tuple {:updated, <new-state>}
     """, %{state: state} do
       updated_post = %Memory.RawPost{
         author: "Reductions", path: "mix.md", content: "Updated!"
       }
       Memory.replace_post(updated_post)
+
       {:updates, %{posts: posts}} = Updater.check_updates(state)
-      contents = Enum.map(Map.values(posts), &(&1.raw))
+      posts = Map.values(posts[Blogit.Settings.default_language()])
+      contents = Enum.map(posts, &(&1.raw))
 
       assert Enum.member?(contents, "Updated!")
     end

@@ -73,8 +73,12 @@ defmodule Blogit.RepositoryProviders.Memory do
   def add_post(raw_post) do
     Agent.get_and_update(__MODULE__,
     fn (%{updates: updates, raw_posts: raw_posts} = state) ->
+      final_updates = [
+        Path.join(Blogit.Settings.posts_folder(), raw_post.path) | updates
+      ]
+
       {state, %{state |
-        raw_posts: [raw_post | raw_posts], updates: [raw_post.path | updates]
+        raw_posts: [raw_post | raw_posts], updates: final_updates
       }}
     end)
   end
@@ -104,9 +108,11 @@ defmodule Blogit.RepositoryProviders.Memory do
     Agent.get_and_update(__MODULE__,
     fn (%{updates: updates, raw_posts: raw_posts} = state) ->
       updated_posts = Enum.filter(raw_posts, &(&1.path != raw_post.path))
+      final_updates = [
+        Path.join(Blogit.Settings.posts_folder(), raw_post.path) | updates
+      ]
       {state, %{state |
-        raw_posts: [raw_post | updated_posts],
-        updates: [raw_post.path | updates]
+        raw_posts: [raw_post | updated_posts], updates: final_updates
       }}
     end)
   end

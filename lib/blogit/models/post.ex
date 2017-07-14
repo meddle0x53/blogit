@@ -98,10 +98,12 @@ defmodule Blogit.Models.Post do
   ## Examples
 
       iex> Blogit.Models.Post.names_from_files(["SomeFile.md", "another.md"])
-      ["somefile", "another"]
+      ...> |> Enum.map(&(elem(&1, 1)))
+      [:somefile, :another]
 
       iex> Blogit.Models.Post.names_from_files(["one/two/name.md"])
-      ["one_two_name"]
+      ...> |> Enum.map(&(elem(&1, 1)))
+      [:one_two_name]
   """
   @spec names_from_files([String.t]) :: [String.t]
   def names_from_files(files) do

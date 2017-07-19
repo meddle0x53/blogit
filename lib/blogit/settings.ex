@@ -4,6 +4,7 @@ defmodule Blogit.Settings do
     :blogit, :configuration_file, "blog.yml"
   )
   @posts_folder "posts"
+  @meta_divider "\n---\n"
 
   def languages, do: Application.get_env(:blogit, :languages, ~w(en))
 
@@ -16,4 +17,6 @@ defmodule Blogit.Settings do
   def configuration_file, do: @configuration_file
 
   def posts_folder, do: @posts_folder
+
+  def meta_divider, do: @meta_divider
 end

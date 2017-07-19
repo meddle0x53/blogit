@@ -14,6 +14,7 @@ defmodule Fixtures do
       created_at: "2017-06-05 08:46:50",
       updated_at: "2017-06-11 08:46:50",
       content: """
+      ---
       title_image_path: modules.jpg
       category: Програма
       author: valo
@@ -22,8 +23,7 @@ defmodule Fixtures do
         - modules
         - functions
         - recursion
-
-      <><><><><><><><>
+      ---
 
       # Модули, функции и рекурсия
 

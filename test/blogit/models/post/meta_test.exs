@@ -69,14 +69,14 @@ defmodule Blogit.Models.Post.MetaTest do
     test "uses data from the top of the raw content if any",
     %{repository: repository} do
       raw = """
+      ---
       author: valo
       tags:
       - elixir
       - modules
       - functions
       - recursion
-
-      <><><><><><><><>
+      ---
 
       # Модули, функции и рекурсия
 
@@ -109,9 +109,9 @@ defmodule Blogit.Models.Post.MetaTest do
     test "inline meta overrides file meta",
     %{repository: repository} do
       raw = """
+      ---
       category: Програма
-
-      <><><><><><><><>
+      ---
 
       # Модули, функции и рекурсия
       """

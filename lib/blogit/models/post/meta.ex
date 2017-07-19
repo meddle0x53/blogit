@@ -23,8 +23,6 @@ defmodule Blogit.Models.Post.Meta do
   alias Blogit.RepositoryProvider, as: Repository
   import Blogit.Settings
 
-  @meta_divider Application.get_env(:blogit, :meta_divider, "--------")
-
   @type t :: %__MODULE__{
     author: String.t, title: String.t, category: String.t, published: boolean,
     tags: [String.t], title_image_path: String.t, pinned: boolean,
@@ -77,17 +75,17 @@ defmodule Blogit.Models.Post.Meta do
   end
 
   defp merge_with_inline(data, raw) when is_map(data) do
-    merge_with_inline(data, raw, String.contains?(raw, @meta_divider))
+    merge_with_inline(data, raw, String.contains?(raw, meta_divider()))
   end
 
   defp merge_with_inline(_, raw) do
-    merge_with_inline(%{}, raw, String.contains?(raw, @meta_divider))
+    merge_with_inline(%{}, raw, String.contains?(raw, meta_divider()))
   end
 
   defp merge_with_inline(data, _, false), do: data
 
   defp merge_with_inline(data, raw, true) do
-    [raw_meta | _] = String.split(raw, @meta_divider, trim: true)
+    [raw_meta | _] = String.split(raw, meta_divider(), trim: true)
                      |> Enum.map(&String.trim/1)
 
     merge_meta(data, YamlElixir.read_from_string(raw_meta))
@@ -110,6 +108,7 @@ defmodule Blogit.Models.Post.Meta do
     author = data["author"] || repository.provider.file_author(
       repository.repo, Path.join(posts_folder(), file_path)
     )
+
     {:ok, created_at, _} = Calendar.NaiveDateTime.Parse.iso8601(created_at)
     {:ok, updated_at, _} = Calendar.NaiveDateTime.Parse.iso8601(updated_at)
 

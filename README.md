@@ -44,8 +44,6 @@ Possible settings are:
 * `polling`             |> Tells Blogit if it should poll the repository specified through `repository_url` for changes. By default it is `true`.
 * `poll_interval`       |> Used if `polling` is set to `true`. The polling for changes will happen on this interval of milliseconds. By default it is `10_000` milliseconds or `10` seconds.
 * `repository_provider` |> Specified a specific implementation of the [Blogit.RepositoryProvider](https://github.com/meddle0x53/blogit/blob/master/lib/blogit/repository_provider.ex) behaviour. By default it uses `Blogit.RepositoryProviders.Git` which works with git repositories and knows how to check for changes in them.
-* `posts_folder`        |> The folder in which the markdown files will be transformed into blog post structures. By default it is the root of the repository.
-* `meta_divider`        |> The divider which divides the markdown file of a post into metadata and content. By default it is `--------`
 * `configuration_file`  |> Path to YAML file in the repository, which contains configuration for the blog. By default it is `blog.yml`.
 
 Using these settings a custom blog can be created from whatever repository. It is not hard to write FTP repository provider or Ecto repository provider.
@@ -155,7 +153,7 @@ Follow these steps to create your own blog:
       config :blogit,
         repository_url: "<path-to-a-git-repository-with-your-posts>",
         polling: true, poll_interval: 300_000, mode: :prod,
-        meta_divider: "--------", assets_path: "assets"
+        assets_path: "assets"
       ```
 
   3. Deploy it somewhere.

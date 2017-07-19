@@ -91,11 +91,17 @@ defmodule Blogit.RepositoryProviders.Git do
   end
 
   def file_created_at(repository, file_name) do
-    first_in_log(repository, ["--reverse", "--format=%ci", file_name])
+    case first_in_log(repository, ["--reverse", "--format=%ci", file_name]) do
+      "" -> DateTime.to_iso8601(DateTime.utc_now())
+      created_at -> created_at
+    end
   end
 
   def file_updated_at(repository, file_name) do
-    log(repository, ["-1", "--format=%ci", file_name]) |> String.trim
+    case log(repository, ["-1", "--format=%ci", file_name]) |> String.trim do
+      "" -> DateTime.to_iso8601(DateTime.utc_now())
+      updated_at -> updated_at
+    end
   end
 
   def read_file!(file_path, folder \\ "") do

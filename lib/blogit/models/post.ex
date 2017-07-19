@@ -24,8 +24,6 @@ defmodule Blogit.Models.Post do
   alias Blogit.RepositoryProvider, as: Repository
   import Blogit.Settings
 
-  @meta_divider Application.get_env(:blogit, :meta_divider, "--------")
-
   @type t :: %__MODULE__{
     name: String.t, raw: String.t, html: String.t, meta: Meta.t
   }
@@ -46,7 +44,7 @@ defmodule Blogit.Models.Post do
     name = name_from_file(file_path, language)
 
     raw = repository.provider.read_file!(file_path, posts_folder())
-    data = String.split(raw, @meta_divider, trim: true)
+    data = String.split(raw, meta_divider(), trim: true)
            |> Enum.map(&String.trim/1)
 
     html =

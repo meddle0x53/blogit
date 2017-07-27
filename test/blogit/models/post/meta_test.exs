@@ -18,15 +18,16 @@ defmodule Blogit.Models.Post.MetaTest do
     test "uses repository data if no meta is found",
     %{repository: %{provider: provider} = repository} do
       lang = Blogit.Settings.default_language()
-      meta = Meta.from_file("processes.md", repository, "", "processes", lang)
+      raw = [nil, ""]
+      meta = Meta.from_file("processes.md", repository, raw, "processes", lang)
 
-      assert meta.author == provider.file_author(nil, "processes.md")
+      assert meta.author == provider.file_info(nil, "processes.md")[:author]
 
       created_at = to_string(meta.created_at)
-      assert created_at == provider.file_created_at(nil, "processes.md")
+      assert created_at == provider.file_info(nil, "processes.md")[:created_at]
 
       updated_at = to_string(meta.updated_at)
-      assert updated_at == provider.file_updated_at(nil, "processes.md")
+      assert updated_at == provider.file_info(nil, "processes.md")[:updated_at]
     end
 
     test """
@@ -35,8 +36,8 @@ defmodule Blogit.Models.Post.MetaTest do
     as meta or the content doesn't have title header
     """, %{repository: repository} do
       meta = Meta.from_file(
-        "control_flow_and_errors.md", repository, "", "control_flow_and_errors",
-        Blogit.Settings.default_language()
+        "control_flow_and_errors.md", repository, [nil, ""],
+        "control_flow_and_errors", Blogit.Settings.default_language()
       )
 
       assert meta.title == "Control Flow And Errors"
@@ -45,25 +46,14 @@ defmodule Blogit.Models.Post.MetaTest do
     test "uses defaults if no meta data can be found",
     %{repository: repository} do
       lang = Blogit.Settings.default_language()
-      meta = Meta.from_file("processes.md", repository, "", "processes", lang)
+      raw = [nil, ""]
+      meta = Meta.from_file("processes.md", repository, raw, "processes", lang)
 
       assert meta.tags == []
       assert meta.published == true
       assert meta.category == nil
       assert meta.title_image_path == nil
       assert meta.pinned == false
-    end
-
-    test "uses data from a meta file if it has any",
-    %{repository: repository} do
-      meta = Meta.from_file(
-        "modules_functions_recursion.md", repository,
-        "", "modules_functions_recursion", Blogit.Settings.default_language()
-      )
-
-      assert meta.pinned == true
-      assert meta.category == "Program"
-      assert meta.published == false
     end
 
     test "uses data from the top of the raw content if any",
@@ -82,9 +72,12 @@ defmodule Blogit.Models.Post.MetaTest do
 
       Организацията на кода в Elixir става чрез модули.
       """
+
+      raw_data = String.split(raw, Blogit.Settings.meta_divider(), trim: true)
+                 |> Enum.map(&String.trim/1)
       meta = Meta.from_file(
-        "modules_functions_recursion.md", repository,
-        raw, "modules_functions_recursion", Blogit.Settings.default_language()
+        "modules_functions_recursion.md", repository, raw_data,
+        "modules_functions_recursion", Blogit.Settings.default_language()
       )
 
       assert meta.author == "valo"
@@ -98,9 +91,10 @@ defmodule Blogit.Models.Post.MetaTest do
 
       Организацията на кода в Elixir става чрез модули.
       """
+
       meta = Meta.from_file(
-        "modules_functions_recursion.md", repository,
-        raw, "modules_functions_recursion", Blogit.Settings.default_language()
+        "modules_functions_recursion.md", repository, [nil, raw],
+        "modules_functions_recursion", Blogit.Settings.default_language()
       )
 
       assert meta.title == "Модули, функции и рекурсия"
@@ -115,9 +109,12 @@ defmodule Blogit.Models.Post.MetaTest do
 
       # Модули, функции и рекурсия
       """
+
+      raw_data = String.split(raw, Blogit.Settings.meta_divider(), trim: true)
+                 |> Enum.map(&String.trim/1)
       meta = Meta.from_file(
-        "modules_functions_recursion.md", repository,
-        raw, "modules_functions_recursion", Blogit.Settings.default_language()
+        "modules_functions_recursion.md", repository, raw_data,
+        "modules_functions_recursion", Blogit.Settings.default_language()
       )
 
       assert meta.category == "Програма"

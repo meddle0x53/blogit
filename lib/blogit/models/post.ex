@@ -42,18 +42,29 @@ defmodule Blogit.Models.Post do
   @spec from_file(String.t, Repository.t, String.t) :: t
   def from_file(file_path, repository, language) do
     name = name_from_file(file_path, language)
+    case repository.provider.read_file(file_path, posts_folder()) do
+      {:error, _} -> %__MODULE__{name: name, raw: nil, html: nil, meta: nil}
+      {:ok, raw} ->
+        data =
+          if String.contains?(raw, meta_divider()) do
+            raw
+            |> String.split(meta_divider(), trim: true)
+            |> Enum.map(&String.trim/1)
+          else
+            [nil, String.trim(raw)]
+          end
 
-    raw = repository.provider.read_file!(file_path, posts_folder())
-    data = String.split(raw, meta_divider(), trim: true)
-           |> Enum.map(&String.trim/1)
+        meta = Meta.from_file(file_path, repository, data, name, language)
 
-    html =
-      Earmark.as_html!(String.replace(List.last(data), ~r/^\s*\#\s*.+/, ""))
-
-    meta =
-      Meta.from_file(file_path, repository, raw, name, language)
-
-    %__MODULE__{name: name, raw: raw, html: html, meta: meta}
+        if meta.published do
+          html = Earmark.as_html!(
+                   String.replace(List.last(data), ~r/^\s*\#\s*.+/, "")
+                 )
+          %__MODULE__{name: name, raw: raw, html: html, meta: meta}
+        else
+          %__MODULE__{name: name, raw: raw, html: nil, meta: meta}
+        end
+    end
   end
 
   @doc """
@@ -82,6 +93,8 @@ defmodule Blogit.Models.Post do
       end)
       |> Enum.map(&Path.join/1)
       |> Enum.map(fn(file) -> from_file(file, repository, language) end)
+      |> Enum.reject(&(is_nil(&1.raw)))
+      |> Enum.filter(&(&1.meta.published))
       |> Enum.map(fn(post) -> {String.to_atom(post.name), post} end)
       |> Enum.into(%{})
 
@@ -113,7 +126,7 @@ defmodule Blogit.Models.Post do
       {languages() |> Enum.find(default_language(), &(prefix == &1)), path}
     end)
     |> Enum.map(fn {lang, path} ->
-      {lang, name_from_file(path, lang) |> String.to_atom()}
+      {lang, path |> name_from_file(lang) |> String.to_atom()}
     end)
   end
 
@@ -207,9 +220,10 @@ defmodule Blogit.Models.Post do
       Map.merge(map, %{year => month_map})
     end) |> Map.to_list
     |> Enum.flat_map(fn {year, dates} ->
-      Map.to_list(dates)
-      |> Enum.map(fn {month, count} -> {year, month, count}end)
-    end) |> Enum.sort(fn({year1, month1, _}, {year2, month2, _})->
+      dates
+      |> Map.to_list()
+      |> Enum.map(fn {month, count} -> {year, month, count} end)
+    end) |> Enum.sort(fn({year1, month1, _}, {year2, month2, _}) ->
       case (year1 == year2) do
         true -> month2 <= month1
         false -> year2 <= year1

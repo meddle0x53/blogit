@@ -20,7 +20,7 @@ defmodule Blogit.Logic.UpdaterTest do
 
   describe ".check_updates" do
     setup %{repository: repository} do
-      posts = Post.compile_posts(repository.provider.local_files, repository)
+      posts = Post.compile_posts(repository.provider.list_files, repository)
       configurations = Configuration.from_file(repository.provider)
       %{
         state: %Blogit.Server{

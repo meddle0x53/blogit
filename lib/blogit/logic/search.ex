@@ -151,7 +151,8 @@ defmodule Blogit.Logic.Search do
     tagless_filters = Map.delete filters, :tags
     no_search_filters = Map.delete tagless_filters, :q
 
-    all_by(posts, no_search_filters, [:meta])
+    posts
+    |> all_by(no_search_filters, [:meta])
     |> filter_tags(filters)
     |> filter_search(filters)
   end
@@ -173,24 +174,28 @@ defmodule Blogit.Logic.Search do
   defp all_by(posts, params, deep) do
     Enum.filter posts, fn entry ->
       Enum.all?(params, fn {key, val} ->
-        data = Enum.reduce(deep, entry, fn (current, acc) ->
-          Map.fetch!(acc, current)
-        end)
-        Map.get(data, key) == val
+        deep_check_equal(deep, entry, key, val)
       end)
     end
   end
 
-  defp filter_category(filters = %{category: "uncategorized"}) do
+  defp deep_check_equal(deep, entry, key, val) do
+    data = Enum.reduce(deep, entry, fn (current, acc) ->
+      Map.fetch!(acc, current)
+    end)
+    Map.get(data, key) == val
+  end
+
+  defp filter_category(%{category: "uncategorized"} = filters) do
     %{filters | category: nil}
   end
   defp filter_category(filters), do: filters
 
   defp filter_tags(posts, %{tags: tags}) do
-    cond do
-      String.match?(tags, ~r/^\w+\s*(,\s*\w+\s*)*$/) ->
-        filter_by_tags(tags, posts)
-      true -> posts
+    if String.match?(tags, ~r/^\w+\s*(,\s*\w+\s*)*$/) do
+      filter_by_tags(tags, posts)
+    else
+      posts
     end
   end
 

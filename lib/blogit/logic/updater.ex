@@ -7,6 +7,7 @@ defmodule Blogit.Logic.Updater do
   posts repository is not blocked while checking for updates.
   """
 
+  alias Blogit.Settings
   alias Blogit.Models.Post
   alias Blogit.Models.Configuration
 
@@ -52,8 +53,8 @@ defmodule Blogit.Logic.Updater do
 
   defp updated_posts(current_posts, updates, repository) do
     new_files = Enum.filter(updates, &repository.provider.file_in?/1)
-    deleted_posts = filter_post_updates(updates -- new_files)
-                    |> Post.names_from_files
+    deleted_posts =
+      updates -- new_files |> filter_post_updates() |> Post.names_from_files()
 
     new_files = filter_post_updates(new_files)
     new_posts = current_posts
@@ -69,10 +70,11 @@ defmodule Blogit.Logic.Updater do
   defp filter_post_updates(updates) do
     updates
     |> Enum.map(&Path.split/1)
-    |> Enum.filter_map(fn path ->
+    |> Enum.filter(fn path ->
         [prefix | _] = path
-        prefix == Blogit.Settings.posts_folder()
-      end, fn path ->
+        prefix == Settings.posts_folder()
+      end)
+    |> Enum.map(fn path ->
         [_ | rest] = path
         Path.join(rest)
       end)

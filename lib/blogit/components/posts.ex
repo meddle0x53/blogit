@@ -34,7 +34,8 @@ defmodule Blogit.Components.Posts do
   def base_name, do: @base_name
   def name(language), do: :"#{base_name()}_#{language}"
 
-  alias Blogit.Models.Post
+  alias Blogit.Settings
+  alias Blogit.Models.Post.Meta
   alias Blogit.Logic.Search
 
   @doc """
@@ -49,7 +50,7 @@ defmodule Blogit.Components.Posts do
   unique names of the posts and values `Blogit.Models.Post` structures,
   representing the posts.
   """
-  def start_link(language \\ Blogit.Settings.default_language()) do
+  def start_link(language \\ Settings.default_language()) do
     GenServer.start_link(__MODULE__, language, name: name(language))
   end
 
@@ -71,35 +72,21 @@ defmodule Blogit.Components.Posts do
     {:reply, Map.values(posts), state}
   end
 
-  def handle_call({:list, from, size}, _from, %{posts: posts} = state) do
-    result = Map.values(posts)
-             |> Post.sorted |> Enum.drop(from) |> Enum.take(size)
-
-    {:reply, result, state}
-  end
-
-  def handle_call(:list_pinned, _from, %{posts: posts} = state) do
-    result = Map.values(posts)
-             |> Enum.filter(fn post -> post.meta.pinned end)
-             |> Post.sorted(:updated_at)
-             |> Enum.map(fn post -> {post.name, post.meta.title} end)
-
-    {:reply, result, state}
-  end
-
   def handle_call(
     {:filter, filters, from, size}, _from, %{posts: posts} = state
   ) do
-    result = Map.values(posts) |> Search.filter_by_params(filters)
-             |> Post.sorted |> Enum.drop(from) |> Enum.take(size)
+    take = if size == :infinity, do: map_size(posts), else: size
+    result = posts |> Map.values() |> Search.filter_by_params(filters)
+             |> Enum.map(&(&1.meta)) |> Meta.sorted()
+             |> Enum.drop(from) |> Enum.take(take)
 
     {:reply, result, state}
   end
 
   def handle_call({:by_name, name}, _from, %{posts: posts} = state) do
     case post = posts[name] do
-      nil -> {:reply, :error, state}
-      _ -> {:reply, post, state}
+      nil -> {:reply, {:error, "No post with name #{name} found."}, state}
+      _ -> {:reply, {:ok, post}, state}
     end
   end
 end

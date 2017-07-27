@@ -44,8 +44,14 @@ defmodule Blogit.RepositoryProvider do
   defstruct [:repo, :provider]
 
   @doc """
-  Invoked to get representation structure of the repository the provider
+  Invoked to get a representation structure of the repository the provider
   manages.
+  All the actual data represented by this structure will be updated to its
+  newest versions first.
+
+  If, for example the repository is remote, all the files in it should be
+  downloaded so their most recent versions are accessible.
+
   This structure can be passed to other callbacks in order to manage files
   in the repository.
   """
@@ -61,20 +67,6 @@ defmodule Blogit.RepositoryProvider do
   @callback fetch(repository) :: fetch_result
 
   @doc """
-  Invoked to get a representation structure of the repository the provider
-  manages.
-  All the actual data represented by this structure will be updated to its
-  newest versions first.
-
-  If, for example the repository is remote, all the files in it should be
-  downloaded so their most recent versions are accessible.
-
-  This structure can be passed to other callbacks in order to manage files
-  in the repository.
-  """
-  @callback updated_repository() :: repository
-
-  @doc """
   Invoked to get the path to the locally downloaded data.
   """
   @callback local_path() :: String.t
@@ -83,39 +75,14 @@ defmodule Blogit.RepositoryProvider do
   Invoked to get a list of file paths of the files contained in the locally
   downloaded repository.
   """
-  @callback local_files() :: [file_path]
+  @callback list_files(folder) :: [file_path]
 
   @doc """
   Checks if a file path is contained in the local version of the repository.
   """
   @callback file_in?(file_path) :: boolean
 
-  @doc """
-  Invoked to get the author of the file located at the given `file_path`.
-  """
-  @callback file_author(repository, file_path) :: String.t
-
-  @doc """
-  Invoked to get the creation date of the file located at the given
-  `file_path`.
-  """
-  @callback file_created_at(repository, file_path) :: timestamp
-
-  @doc """
-  Invoked to get the date of the last update of the file located at the given
-  `file_path`.
-  """
-  @callback file_updated_at(repository, file_path) :: timestamp
-
-  @doc """
-  Invoked in order to read the contents of the file located at the given
-  `file_path`. If the file could not be read an error is raised.
-
-  The second parameter can be a path to a folder relative to
-  `Blogit.RepositoryProvider.local_path/0` in which the given `file_path` should
-  exist.
-  """
-  @callback read_file!(file_path, folder) :: String.t
+  @callback file_info(repository, file_path) :: %{atom => String.t | timestamp}
 
   @doc """
   Invoked in order to read the contents of the file located at the given
@@ -126,14 +93,4 @@ defmodule Blogit.RepositoryProvider do
   exist.
   """
   @callback read_file(file_path, folder) :: file_read_result
-
-  @doc """
-  Invoked in order to read the meta data of the file located at the given
-  `file_path`.
-
-  The second parameter can be a path to a folder relative to
-  `Blogit.RepositoryProvider.local_path/0` in which the given `file_path` should
-  exist.
-  """
-  @callback read_meta_file(file_path, folder) :: file_read_result
 end

@@ -26,12 +26,13 @@ defmodule Blogit.Models.Configuration do
   @type t :: %__MODULE__{
     title: String.t, sub_title: string_or_nil, logo_path: string_or_nil,
     background_image_path: string_or_nil, styles_path: string_or_nil,
-    language: String.t
+    language: String.t, social: %{String.t => String.t | boolean}
   }
   @enforce_keys [:title]
   defstruct [
     :title, :logo_path, :sub_title, :background_image_path, :styles_path,
-    language: default_language()
+    language: default_language(),
+    social: %{"rss" => true, "stars_for_blogit" => true}
   ]
 
   @doc """
@@ -108,14 +109,17 @@ defmodule Blogit.Models.Configuration do
       background_image_path:
         data["background_image_path"] || template.background_image_path,
       styles_path: data["styles_path"] || template.styles_path,
-      language: data["language"] || template.language
+      language: data["language"] || template.language,
+      social: data["social"] || template.social
     }
   end
 
   defp from_defaults(repository_provider) do
     %__MODULE__{
       title: default_title(repository_provider), logo_path: nil, sub_title: nil,
-      background_image_path: nil, styles_path: nil, language: default_language()
+      background_image_path: nil, styles_path: nil,
+      language: default_language(),
+      social: %{"rss" => true, "stars_for_blogit" => true}
     }
   end
 
@@ -128,7 +132,7 @@ defmodule Blogit.Models.Configuration do
   end
 
   defp default_result(defaults) do
-    Blogit.Settings.languages() |> Enum.map(fn language ->
+    languages() |> Enum.map(fn language ->
       Map.put(defaults, :language, language)
     end)
   end

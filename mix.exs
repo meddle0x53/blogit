@@ -6,7 +6,7 @@ defmodule Blogit.Mixfile do
   def project do
     [app: :blogit,
      version: @version,
-     elixir: "~> 1.4",
+     elixir: "~> 1.5",
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      docs: [
@@ -19,6 +19,7 @@ defmodule Blogit.Mixfile do
      """,
      package: package(),
      aliases: aliases(),
+     dialyzer: [plt_add_deps: :apps_direct, plt_add_apps: [:yaml_elixir]],
      deps: deps()]
   end
 
@@ -32,9 +33,10 @@ defmodule Blogit.Mixfile do
       {:git_cli, "~> 0.2"},
       {:earmark, "~> 1.1"},
       {:yaml_elixir, "~> 1.3.0"},
-      {:calendar, "~> 0.16.1"},
+      {:calendar, "~> 0.17.3"},
       {:ex_doc, ">= 0.15.0", only: :dev},
-      {:dialyxir, "~> 0.5", only: [:dev], runtime: false}
+      {:dialyxir, "~> 0.5", only: [:dev], runtime: false},
+      {:credo, "~> 0.8", only: [:dev, :test], runtime: false}
     ]
   end
 

@@ -20,113 +20,101 @@ defmodule Blogit.Models.Post.Meta do
   containing the file.
   """
 
+  alias Calendar.NaiveDateTime.Parse
   alias Blogit.RepositoryProvider, as: Repository
+
   import Blogit.Settings
 
   @type t :: %__MODULE__{
     author: String.t, title: String.t, category: String.t, published: boolean,
     tags: [String.t], title_image_path: String.t, pinned: boolean,
-    year: String.t, month: String.t, language: String.t,
-    created_at: Calendar::NaiveDateTime.t,
-    updated_at: Calendar::NaiveDateTime.t
+    year: String.t, month: String.t, language: String.t, preview: String.t,
+    name: String.t,
+    created_at: Calendar::NaiveDateTime.t, updated_at: Calendar::NaiveDateTime.t
   }
   defstruct [
     :created_at, :updated_at, :author, :title, :category, :tags, :published,
-    :title_image_path, :pinned, :year, :month, :language
+    :title_image_path, :pinned, :year, :month, :language, :preview, :name
   ]
 
   @doc """
   Creates a Post.Meta structure using the source file of a Post, its raw data
   and the repository containing the blog data.
   """
-  @spec from_file(String.t, Repository.t, String.t, String.t, String.t) :: t
-  def from_file(file_path, repository, raw, name, language) do
-    create_meta(
-      repository.provider.read_meta_file(file_path, posts_folder()), file_path,
-      repository, raw, name, language
-    )
+  @spec from_file(String.t, Repository.t, [String.t], String.t, String.t) :: t
+  def from_file(file_path, repository, raw_data, name, language) do
+    raw_meta = List.first(raw_data)
+    raw = List.last(raw_data)
+
+    meta = merge_with_inline(raw_meta)
+    post_data = %{raw: raw, name: name, language: language}
+    create_from_map(meta, file_path, repository, post_data)
   end
 
-  @doc """
-  Retrieves the folder where the meta information files reside.
-
-  ## Examples
-
-      iex> folder = Blogit.Models.Post.Meta.folder()
-      iex> Path.split(folder)
-      ~w(posts meta)
-  """
-  @spec folder() :: String.t
-  def folder, do: Path.join(posts_folder(), "meta") |> String.trim_leading("/")
+  def sorted(metas, field \\ :created_at) do
+    Enum.sort(metas, fn (meta1, meta2) ->
+      Calendar.NaiveDateTime.before?(
+        Map.get(meta2, field), Map.get(meta1, field)
+      )
+    end)
+  end
 
   ###########
   # Private #
   ###########
 
-  defp create_meta({:error, _}, file_path, repository, raw, name, language) do
-    create_from_map(
-      merge_with_inline(%{}, raw), file_path, repository, raw, name, language
-    )
-  end
+  defp merge_with_inline(raw_meta) when is_nil(raw_meta), do: %{}
+  defp merge_with_inline(raw_meta), do: YamlElixir.read_from_string(raw_meta)
 
-  defp create_meta({:ok, data}, file_path, repository, raw, name, language) do
-    meta = merge_with_inline(YamlElixir.read_from_string(data), raw)
-    create_from_map(meta, file_path, repository, raw, name, language)
-  end
+  defp create_from_map(
+    data, file_path, repository, %{raw: raw, name: name, language: language}
+  ) when is_map(data) do
+    path = Path.join(posts_folder(), file_path)
+    file_info = repository.provider.file_info(repository.repo, path)
 
-  defp merge_with_inline(data, raw) when is_map(data) do
-    merge_with_inline(data, raw, String.contains?(raw, meta_divider()))
-  end
+    created_at = data["created_at"] || file_info[:created_at]
+    updated_at = data["updated_at"] || file_info[:updated_at]
+    author = data["author"] || file_info[:author]
+    author = if author == "", do: "Anonymous", else: author
 
-  defp merge_with_inline(_, raw) do
-    merge_with_inline(%{}, raw, String.contains?(raw, meta_divider()))
-  end
+    {:ok, created_at, _} = Parse.iso8601(created_at)
+    {:ok, updated_at, _} = Parse.iso8601(updated_at)
 
-  defp merge_with_inline(data, _, false), do: data
+    index = nth_index_of(raw, 0, 0, max_lines_in_preview())
+    {:ok, preview, _} = raw
+                        |> String.split_at(index)
+                        |> elem(0)
+                        |> String.replace(~r/^\s*\#\s*.+/, "")
+                        |> Earmark.as_html()
 
-  defp merge_with_inline(data, raw, true) do
-    [raw_meta | _] = String.split(raw, meta_divider(), trim: true)
-                     |> Enum.map(&String.trim/1)
-
-    merge_meta(data, YamlElixir.read_from_string(raw_meta))
-  end
-
-  defp merge_meta(current, inline) when is_map(inline) do
-    Map.merge(current, inline)
-  end
-
-  defp merge_meta(current, _), do: current
-
-  defp create_from_map(data, file_path, repository, raw, name, language)
-  when is_map(data) do
-    created_at = data["created_at"] || repository.provider.file_created_at(
-      repository.repo, Path.join(posts_folder(), file_path)
-    )
-    updated_at = data["updated_at"] || repository.provider.file_updated_at(
-      repository.repo, Path.join(posts_folder(), file_path)
-    )
-    author = data["author"] || repository.provider.file_author(
-      repository.repo, Path.join(posts_folder(), file_path)
-    )
-
-    {:ok, created_at, _} = Calendar.NaiveDateTime.Parse.iso8601(created_at)
-    {:ok, updated_at, _} = Calendar.NaiveDateTime.Parse.iso8601(updated_at)
+    tags = Map.get(data, "tags", [])
 
     %__MODULE__{
       created_at: created_at, updated_at: updated_at, author: author,
       title: data["title"] || retrieve_title(raw, name),
-      tags: Map.get(data, "tags", []) |> Enum.map(&Kernel.to_string/1),
-      published: Map.get(data, "published", true),
+      tags: tags |> Enum.map(&Kernel.to_string/1),
+      published: Map.get(data, "published", true), name: name,
       category: data["category"], year: Integer.to_string(created_at.year),
       month: Integer.to_string(created_at.month),
       title_image_path: data["title_image_path"],
-      pinned: data["pinned"] || false,
-      language: language || Blogit.Settings.default_language()
+      pinned: data["pinned"] || false, preview: preview,
+      language: language || default_language()
     }
   end
 
-  defp create_from_map(_, file_path, repository, raw, name, language) do
-    create_from_map(%{}, file_path, repository, raw, name, language)
+  defp create_from_map(_, file_path, repository, post_data) do
+    create_from_map(%{}, file_path, repository, post_data)
+  end
+
+  defp nth_index_of(<<  >>, index, _, _), do: index
+  defp nth_index_of(<< "\n", _::binary >>, index, n, n), do: index
+
+  defp nth_index_of(<< "\n", rest::binary >>, index, current, n) do
+    nth_index_of(rest, index + 1, current + 1, n)
+  end
+
+  defp nth_index_of(<< _::utf8, rest::binary >>, index, current, n) do
+    nth_index_of(rest, index + 1, current, n)
   end
 
   defp retrieve_title(raw, name) do

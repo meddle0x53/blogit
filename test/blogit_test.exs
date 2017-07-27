@@ -32,24 +32,35 @@ defmodule BlogitTest do
 
     on_exit fn ->
       Application.stop(:blogit)
-      Process.sleep(200)
+      Process.sleep(500)
     end
 
     :ok
   end
 
   describe ".list_posts" do
-    test "by default returns the five newest posts" do
+    test "by default returns all the posts, newest first" do
       names = Blogit.list_posts() |> Enum.map(&(&1.name))
 
-      assert names == ~w[processes plug otp nodes modules_functions_recursion]
+      assert names == ~w[
+        processes plug otp nodes modules_functions_recursion
+        mix control_flow_and_errors
+      ]
     end
 
     test """
-    returns five (maximum) posts beginning from the given as the first argument
-    position, newest first
+    returns all posts (newest first) if the option `:size` is passed as `:infinity`
     """ do
-      names = Blogit.list_posts(2) |> Enum.map(&(&1.name))
+      names = [size: :infinity] |> Blogit.list_posts() |> Enum.map(&(&1.name))
+
+      assert names == ~w[
+        processes plug otp nodes modules_functions_recursion
+        mix control_flow_and_errors
+      ]
+    end
+
+    test "returns all posts beginning from the given position, newest first" do
+      names = [from: 2] |> Blogit.list_posts() |> Enum.map(&(&1.name))
 
       assert names == ~w[
         otp nodes modules_functions_recursion mix control_flow_and_errors
@@ -57,10 +68,10 @@ defmodule BlogitTest do
     end
 
     test """
-    returns N (maximum) posts beginning from the given as the first argument
-    position, newest first. N is the second argument given.
+    returns N (maximum) posts beginning from the given `:from` position,
+    newest first. N is the second argument given.
     """ do
-      names = Blogit.list_posts(2, 3) |> Enum.map(&(&1.name))
+      names = Blogit.list_posts(from: 2, size: 3) |> Enum.map(&(&1.name))
 
       assert names == ~w[otp nodes modules_functions_recursion]
     end
@@ -128,21 +139,27 @@ defmodule BlogitTest do
       assert names == ~w[otp]
     end
 
-    test "the list of posts returns maximum 5 posts by default" do
+    test "the list of posts returns all the posts meeting the filtering " <>
+    "criteria by default" do
       names = Blogit.filter_posts(%{}) |> Enum.map(& &1.name)
 
-      assert names == ~w[processes plug otp nodes modules_functions_recursion]
+      assert names == ~w[
+        processes plug otp nodes modules_functions_recursion mix
+        control_flow_and_errors
+      ]
     end
 
-    test "the second argument - `from` can be used as start position" do
-      names = Blogit.filter_posts(%{}, 1) |> Enum.map(& &1.name)
+    test "the `from` option can be specified as the start position" do
+      names = Blogit.filter_posts(%{}, from: 1) |> Enum.map(& &1.name)
 
-      assert names == ~w[plug otp nodes modules_functions_recursion mix]
+      assert names == ~w[
+        plug otp nodes modules_functions_recursion mix control_flow_and_errors
+     ]
     end
 
-    test "the third argument - `size` can be used to change the default of " <>
-    "5 posts returned" do
-      names = Blogit.filter_posts(%{}, 2, 2) |> Enum.map(& &1.name)
+    test "the `size` option can be used to change the default of " <>
+      "`:infinity` posts returned" do
+      names = Blogit.filter_posts(%{}, from: 2, size: 2) |> Enum.map(& &1.name)
 
       assert names == ~w[otp nodes]
     end
@@ -159,15 +176,16 @@ defmodule BlogitTest do
 
   describe ".post_by_name" do
     test "returns a post by its unique identifier - its name" do
-      post = Blogit.post_by_name(:otp)
+      {:ok, post} = Blogit.post_by_name(:otp)
 
       assert post.name == "otp"
       assert post.meta.author == "meddle"
-      assert post.raw == "OTP!"
+      assert post.raw == "---\ntags:\n  - ab\n  - cd\n---\nOTP!\n"
     end
 
     test "returns the atom :error if no post with the given name is found" do
-      assert Blogit.post_by_name(:something_else) == :error
+      result = Blogit.post_by_name(:something_else)
+      assert result == {:error, "No post with name something_else found."}
     end
   end
 
@@ -175,7 +193,7 @@ defmodule BlogitTest do
     alias Blogit.Models.Configuration
 
     test "returns the blog configuration as Blogit.Models.Configuration" do
-      assert Blogit.configuration() == %Configuration{ title: "Memory" }
+      assert Blogit.configuration() == %Configuration{title: "Memory"}
     end
   end
 
@@ -189,9 +207,11 @@ defmodule BlogitTest do
       assert configuration == Blogit.Settings.languages() |> Enum.map(fn lang ->
         %Blogit.Models.Configuration{title: "Memory", language: lang}
       end)
-      assert posts |> Map.values |> Enum.map(&Map.keys/1) |> List.flatten() == [
-       :control_flow_and_errors, :mix, :modules_functions_recursion, :nodes,
-       :otp, :plug, :processes
+      assert posts |> Map.values |> Enum.map(&Map.keys/1) == [
+       [
+         :control_flow_and_errors, :mix, :modules_functions_recursion, :nodes,
+         :otp, :plug, :processes
+       ], [:mix]
       ]
       assert repository == %Blogit.RepositoryProvider{
         repo: Memory, provider: Memory

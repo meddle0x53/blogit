@@ -15,12 +15,14 @@ defmodule Blogit.Components.Configuration do
 
   use GenServer
 
+  alias Blogit.Settings
+
   @base_name :configuration
 
   def base_name, do: @base_name
   def name(language), do: :"#{base_name()}_#{language}"
 
-  def start_link(language \\ Blogit.Settings.default_language()) do
+  def start_link(language \\ Settings.default_language()) do
     GenServer.start_link(__MODULE__, language, name: name(language))
   end
 

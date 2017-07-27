@@ -1,5 +1,5 @@
 defmodule Blogit.SupervisorTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true
 
   alias Blogit.Components.Supervisor, as: Components
 

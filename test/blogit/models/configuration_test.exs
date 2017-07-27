@@ -4,7 +4,7 @@ defmodule Blogit.Models.ConfigurationTest do
 
   alias Blogit.Models.Configuration
 
-  setup do: Fixtures.posts_in_memory()
+  setup do: Fixtures.setup()
 
   describe ".from_file" do
     test "returns a default configuration if file can't be found",

@@ -1,21 +1,20 @@
 defmodule Blogit do
   @moduledoc """
-  The Blogit Application module for the application :blogit.
+  The Blogit Application module for the application `:blogit`.
 
-  The application is started using this module and can be used using the
+  The application is started using this module and can be used through the
   public interface it provides.
 
   What is Blogit? Blogit is a blog engine. It uses a repository (by default
   a git repository) containing markdown files to build posts and
   configuration for a blog. It can be used by, for example, Phoenix
-  application as a back-end. An example of such Phoenix application is
+  application as a back-end. One such Phoenix application is
   [Blogit Web](https://github.com/meddle0x53/blogit_web).
 
-  An example of a running blog which uses Blogit and Blogit Web is the
+  An example of a running blog which uses `Blogit` and `Blogit Web` is the
   blog of the Elixir Course of the Sofia University :
   [blog.elixir-lang.bg](https://blog.elixir-lang.bg/posts).
-  Its repository, used by Blogit can be found here
-  https://github.com/ElixirCourse/blog.
+  Its git repository, can be found here https://github.com/ElixirCourse/blog.
 
   Yes, Blogit is the Elixir version of Octopress. That said, Blogit is very
   extensible - the repository it uses can be something other than a Git one.
@@ -31,7 +30,8 @@ defmodule Blogit do
   ```
 
   For now the post files have to be in markdown, but this will be configurable
-  too. The meta-data of a post is in YAML for the moment.
+  too. The meta-data of a post is in YAML which could be included in the
+  markdown source file of the post, in the beginning.
 
   As Blogit is simple OTP Application with very simple public interface,
   presented by this module, it can have custom front-end too.
@@ -44,6 +44,7 @@ defmodule Blogit do
   use Application
 
   alias Blogit.Components.Posts
+  alias Blogit.Components.Metas
   alias Blogit.Components.PostsByDate
   alias Blogit.Components.Configuration
 
@@ -57,45 +58,65 @@ defmodule Blogit do
     :blogit, :repository_provider, Blogit.RepositoryProviders.Git
   )
 
+  @default_from_posts 0
+  @default_size_posts :infinity
+
   def start(_type, _args) do
     Blogit.Supervisor.start_link(@repository_provider)
   end
 
   @doc """
-  Returns a list of Blogit.Models.Post structures representing posts in
+  Returns a list of `Blogit.Models.Post.Meta` structures representing posts in
   the blog. The posts are sorted by their creation date, newest first.
 
-  All the markdown files in the configured posts folder will be transformed
-  into Blogit.Models.Post structures and their `created_at` meta field
-  will be read using the configured `Blogit.RepositoryProvider`.
+  All the markdown files in the posts folder will be transformed
+  into `Blogit.Models.Post` structures and their `created_at` meta field
+  will be read using the configured `Blogit.RepositoryProvider`. The 'meta'
+  fields of every post include a `preview` field. Its value is HTML preview
+  of the post. The provider implementation should search (by default) for
+  posts in a `posts` folder, which should be located at the root of the git
+  repository.
 
   Example configuration (`config/prod.exs`):
   ```elixir
     config :blogit,
       repository_url: "some_protocol://some_location.net",
       repository_provider: Blogit.RepositoryProviders.MyProvider,
-      posts_folder: "path-to-the-posts-folder-relative-to-the-repository-root"
+      languages: ["en", "bg"]
   ```
 
-  By default this folder is set to "." - the root of the repository.
+  ## Options
+  * `:from` (non-negative integer) - all the posts for the given/default
+  `language` ordered by their creation date and with indexes smaller than the
+  value of this option will be skipped and not present in the result list of
+  post meta data. Can be used along with the `:size` option to implement simple
+  paging. Defaults to `0`.
+  * `:size` (positive integer or `:infinity`) - the maximum number of post meta
+  structures in the result. By default it is `:infinity`.
+  Can be used along with the `:from` option to implement simple paging.
+  * `:language` - different sets of posts can exist for every language
+  configured. This option can be used to specify which of these sets should be
+  used as the source of the post meta data to be returned.
+  By default posts of the default language will be returned.
 
-  Posts can be skipped using the `from` argument, passed to the function,
-  which is `0` by default. The size of the returned list is `5` by default,
-  but it can be changed with the second argument of the function - `size`.
-  By using these two arguments simple paging functionality can be implemented.
+  ## Example
+  ```
+  posts = Blogit.list_posts(from: 5, size: 10, language: "es")
+  ```
   """
-  @spec list_posts(non_neg_integer, non_neg_integer) :: [Post.t]
-  def list_posts(from \\ 0, size \\ 5, options \\ []) do
-    name = Posts.name(options[:language] || default_language())
-    GenServer.call(name, {:list, from, size})
+  @spec list_posts(keyword) :: [Post.Meta.t]
+  def list_posts(options \\ []) do
+    {from, size, language} = read_options(options)
+    GenServer.call(Metas.name(language), {:list, from, size})
   end
 
   @doc """
-  Returns a list of `Blogit.Models.Post` structures representing pinned
-  posts in the blog. These posts are sorted by their last updated date.
+  Returns a list of tuples. Every such tuple has the id of a post as first
+  element and its title as second . These tuples are sorted by the
+  last updated date of the posts they represent.
 
-  All the markdown files in the configured posts folder will be transformed
-  into Blogit.Models.Post structures and their `updated_at` meta field
+  All the markdown files in the source posts folder will be transformed
+  into `Blogit.Models.Post` structures and their `updated_at` meta field
   will be read using the configured `Blogit.RepositoryProvider`.
 
   Pinned posts are posts which have specified `pinned: true` in their meta
@@ -104,9 +125,9 @@ defmodule Blogit do
   These are special posts which should be easy to find in the front-end
   implementation.
   """
-  @spec list_pinned() :: [Post.t]
+  @spec list_pinned() :: [{String.t, String.t}]
   def list_pinned(options \\ []) do
-    name = Posts.name(options[:language] || default_language())
+    name = Metas.name(options[:language] || default_language())
     GenServer.call(name, :list_pinned)
   end
 
@@ -114,7 +135,7 @@ defmodule Blogit do
   Returns a list of `Blogit.Models.Post` structures, filtered by given criteria.
 
   The first argument of the function is a map of filters.
-  This map supports zero or more of the following keys:
+  This map supports zero or more of the following key-values:
   * "author" - Used to filter posts by their `.meta.author` field.
   * "category" - Used to filter posts by their `.meta.category` field.
   * "tags" - Used to filter posts by their `.meta.tags` field.
@@ -127,16 +148,25 @@ defmodule Blogit do
   For more information on the filtering see
   `Blogit.Logic.Search.filter_by_params/2`.
 
-  The other two arguments of the function can be used for paging.
-  Filtered posts can be skipped using the `from` argument,
-  which is `0` by default. The size of the returned list is `5` by default,
-  but it can be changed with the third argument of the function - `size`.
+  ## Options
+  * `:from` (non-negative integer) - all the posts meeting the given filtering
+  criteria for the given/default `language` ordered by their creation date
+  and with indexes smaller than the value of this option will be skipped and
+  not present in the result list of posts list. Defaults to `0`.
+  Can be used along with the `:size` option to implement simple paging.
+  * `:size` (positive integer or `:infinity`) - the maximum number of posts in
+  the result. By default it is `:infinity`. Can be used along with the
+  `:from` option to implement simple paging.
+  * `:language` - different sets of posts can exist for every language
+  configured. This option can be used to specify which of these sets should be
+  used as the source of the posts to be returned.
+  By default posts of the default language will be returned.
   """
   @type filters :: %{String.t => Search.search_value}
-  @spec filter_posts(filters, non_neg_integer, non_neg_integer) :: [Post.t]
-  def filter_posts(params, from \\ 0, size \\ 5, options \\ []) do
-    name = Posts.name(options[:language] || default_language())
-    GenServer.call(name, {:filter, params, from, size})
+  @spec filter_posts(filters, keyword) :: [Post.t]
+  def filter_posts(params, options \\ []) do
+    {from, size, language} = read_options(options)
+    GenServer.call(Posts.name(language), {:filter, params, from, size})
   end
 
   @doc """
@@ -153,27 +183,40 @@ defmodule Blogit do
   end
 
   @doc """
-  Returns a single post by its unique identifiers - its `name` field.
-  The name should be an atom.
+  Returns a single post by its unique identifier - its `name` field.
+  The name should be an atom. The result is in the form `{:ok, post}`.
 
   Posts have unique names, usually constructed using the file path of their
   source markdown file in the repository.
 
-  If there is no post with the given name, the atom `:error` is returned.
+  If there is no post with the given name,
+  the tuple `{:error, "No post with name the-passed-name found."}` is returned.
   """
-  @spec post_by_name(atom) :: Post.t | :error
+  @spec post_by_name(atom) :: {:ok, Post.t} | {:error, String.t}
   def post_by_name(name, options \\ []) do
-    id = Posts.name(options[:language] || default_language())
-    GenServer.call(id, {:by_name, name})
+    {_, _, language} = read_options(options)
+    GenServer.call(Posts.name(language), {:by_name, name})
   end
 
   @doc """
   Retrieves the blog configuration. The configuration is in the form
   of a `Blogit.Models.Configuration` structure.
+
+  The configuration is generated from an YML file (by default blog.yml, stored
+  in the rood of the repository of the blog), which location can be configured
+  through setting the `configuration_file` key of the `:blogit` configuration.
   """
   @spec configuration :: Blogit.Models.Configuration.t
   def configuration(options \\ []) do
     name = Configuration.name(options[:language] || default_language())
     GenServer.call(name, :get)
+  end
+
+  defp read_options(options) do
+    from = Keyword.get(options, :from, @default_from_posts)
+    size = Keyword.get(options, :size, @default_size_posts)
+    language = Keyword.get(options, :language, default_language())
+
+    {from, size, language}
   end
 end

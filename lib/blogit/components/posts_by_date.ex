@@ -21,6 +21,7 @@ defmodule Blogit.Components.PostsByDate do
   def base_name, do: @base_name
   def name(language), do: :"#{base_name()}_#{language}"
 
+  alias Blogit.Settings
   alias Blogit.Models.Post
   alias Blogit.Components.Posts
 
@@ -34,7 +35,7 @@ defmodule Blogit.Components.PostsByDate do
   `:get` message is received as a 'call', the state is computed using the
   state of the `Blogit.Components.Posts` process.
   """
-  def start_link(language \\ Blogit.Settings.default_language()) do
+  def start_link(language \\ Settings.default_language()) do
     GenServer.start_link(__MODULE__, language, name: name(language))
   end
 

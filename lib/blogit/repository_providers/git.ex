@@ -20,13 +20,15 @@ defmodule Blogit.RepositoryProviders.Git do
   commit of the file and for the last update date is used the date of the last
   commit of the file.
 
-  The `Blogit.RepositoryProvider.updated_repository/0` implementation does
+  The `Blogit.RepositoryProvider.repository/0` implementation does
   `git pull` before returning the repository representation. The
   `Blogit.RepositoryProvider.fetch/1` implementation uses `git fetch` to check
   for deleted, added or updated files.
   """
 
   require Logger
+
+  alias Blogit.Settings
 
   @behaviour Blogit.RepositoryProvider
 
@@ -41,14 +43,7 @@ defmodule Blogit.RepositoryProviders.Git do
   #############
 
   def repository do
-    case Git.clone(@repository_url) do
-      {:ok, repo} -> repo
-      {:error, %Git.Error{code: 128}} -> Git.new(@local_path)
-    end
-  end
-
-  def updated_repository do
-    repo = repository()
+    repo = git_repository()
     case Git.pull(repo) do
       {:ok, msg} -> Logger.info("Pulling from git repository #{msg}")
       {_, error} ->
@@ -61,13 +56,17 @@ defmodule Blogit.RepositoryProviders.Git do
   end
 
   def fetch(repo) do
+    Logger.info("Fetching data from #{@repository_url}")
     case Git.fetch(repo) do
       {:error, _} -> {:no_updates}
       {:ok, ""} -> {:no_updates}
       {:ok, _} ->
         updates =
-          Git.diff!(repo, ["--name-only", "HEAD", "origin/master"])
+          repo
+          |> Git.diff!(["--name-only", "HEAD", "origin/master"])
           |> String.split("\n", trim: true) |> Enum.map(&String.trim/1)
+
+        Logger.info("There are new updates, pulling them.")
         Git.pull!(repo)
 
         {:updates, updates}
@@ -76,53 +75,27 @@ defmodule Blogit.RepositoryProviders.Git do
 
   def local_path, do: @local_path
 
-  def local_files do
-    path = Path.join(@local_path, Blogit.Settings.posts_folder())
+  def list_files(folder \\ Settings.posts_folder()) do
+    path = Path.join(@local_path, folder)
     size = byte_size(path) + 1
 
-    recursive_ls(path)
+    path
+    |> recursive_ls()
     |> Enum.map(fn << _::binary-size(size), rest::binary >> -> rest end)
   end
 
   def file_in?(file), do: File.exists?(Path.join(@local_path, file))
 
-  def file_author(repository, file_name) do
-    first_in_log(repository, ["--reverse", "--format=%an", file_name])
-  end
-
-  def file_created_at(repository, file_name) do
-    case first_in_log(repository, ["--reverse", "--format=%ci", file_name]) do
-      "" -> DateTime.to_iso8601(DateTime.utc_now())
-      created_at -> created_at
-    end
-  end
-
-  def file_updated_at(repository, file_name) do
-    case log(repository, ["-1", "--format=%ci", file_name]) |> String.trim do
-      "" -> DateTime.to_iso8601(DateTime.utc_now())
-      updated_at -> updated_at
-    end
-  end
-
-  def read_file!(file_path, folder \\ "") do
-    file = local_path()
-           |> Path.join(folder) |> Path.join(file_path)
-
-    File.read!(file)
+  def file_info(repository, file_path) do
+    %{
+      author: file_author(repository, file_path),
+      created_at: file_created_at(repository, file_path),
+      updated_at: file_updated_at(repository, file_path)
+    }
   end
 
   def read_file(file_path, folder \\ "") do
     local_path() |> Path.join(folder) |> Path.join(file_path) |> File.read
-  end
-
-  def read_meta_file(file_path, folder \\ "") do
-    meta_file_path = file_path |> String.replace_suffix(".md", ".yml")
-    meta_path = local_path()
-                |> Path.join(folder)
-                |> Path.join("meta")
-                |> Path.join(meta_file_path)
-
-    File.read(meta_path)
   end
 
   ###########
@@ -132,18 +105,45 @@ defmodule Blogit.RepositoryProviders.Git do
   defp log(repository, args), do: Git.log!(repository, args)
 
   defp first_in_log(repository, args) do
-    log(repository, args) |> String.split("\n") |> List.first |> String.trim
+    repository |> log(args) |> String.split("\n") |> List.first |> String.trim
   end
 
   defp recursive_ls(path) do
     cond do
       File.regular?(path) -> [path]
       File.dir?(path) ->
-        File.ls!(path)
+        path
+        |> File.ls!()
         |> Enum.map(&Path.join(path, &1))
         |> Enum.map(&recursive_ls/1)
-        |> Enum.concat
+        |> Enum.concat()
       true -> []
+    end
+  end
+
+  defp git_repository do
+    Logger.info("Clonning repository #{@repository_url}")
+    case Git.clone(@repository_url) do
+      {:ok, repo} -> repo
+      {:error, %Git.Error{code: 128}} -> Git.new(@local_path)
+    end
+  end
+
+  defp file_author(repository, file_name) do
+    first_in_log(repository, ["--reverse", "--format=%an", file_name])
+  end
+
+  defp file_created_at(repository, file_name) do
+    case first_in_log(repository, ["--reverse", "--format=%ci", file_name]) do
+      "" -> DateTime.to_iso8601(DateTime.utc_now())
+      created_at -> created_at
+    end
+  end
+
+  defp file_updated_at(repository, file_name) do
+    case repository |> log(["-1", "--format=%ci", file_name]) |> String.trim do
+      "" -> DateTime.to_iso8601(DateTime.utc_now())
+      updated_at -> updated_at
     end
   end
 end

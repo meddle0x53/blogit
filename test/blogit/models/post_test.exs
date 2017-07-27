@@ -5,7 +5,7 @@ defmodule Blogit.Models.PostTest do
   alias Blogit.Models.Post
   alias Blogit.Models.Post.Meta
 
-  setup do: Fixtures.posts_in_memory()
+  setup do: Fixtures.setup()
 
   describe ".from_file" do
     setup %{repository: repository} = context do
@@ -29,10 +29,10 @@ defmodule Blogit.Models.PostTest do
     test "stores the meta-data retrieved as 'meta'", %{post: post} do
       assert post.meta == %Meta{
         author: "meddle", title: "Processes", tags: [],
-        pinned: false, published: true,
+        pinned: false, published: true, name: "processes",
         created_at: ~N[2017-06-21 08:46:50],
         updated_at: ~N[2017-04-22 13:15:32],
-        year: "2017", month: "6", language: "bg"
+        year: "2017", month: "6", language: "bg", preview: "<p>Stuff</p>\n"
       }
     end
   end
@@ -57,11 +57,11 @@ defmodule Blogit.Models.PostTest do
             html: mix_html,
             raw: "# Title\n Some text...\n## Section 1\n Hey!!\n* i1\n * i2",
             meta: %Meta{
-              author: "Reductions",
+              author: "Reductions", name: "mix",
               category: nil, created_at: ~N[2017-05-30 21:26:49],
               pinned: false, published: true, tags: [], title: "Title",
               title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32],
-              year: "2017", month: "5", language: "bg"
+              year: "2017", month: "5", language: "bg", preview: mix_html
             }
           },
           processes: %Post{
@@ -73,7 +73,8 @@ defmodule Blogit.Models.PostTest do
               created_at: ~N[2017-06-21 08:46:50], pinned: false,
               published: true, tags: [], title: "Processes",
               title_image_path: nil, updated_at: ~N[2017-04-22 13:15:32],
-              year: "2017", month: "6", language: "bg"
+              year: "2017", month: "6", language: "bg",
+              preview: "<p>Stuff</p>\n", name: "processes"
             }
           }
         }

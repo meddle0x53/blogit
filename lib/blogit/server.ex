@@ -26,14 +26,17 @@ defmodule Blogit.Server do
 
   use GenServer
 
+  alias Blogit.Settings
+
   alias Blogit.Models.Post
   alias Blogit.Models.Configuration
 
   alias Blogit.Components.Posts
+  alias Blogit.Components.Metas
   alias Blogit.Components.PostsByDate
+  alias Blogit.Components.Supervisor, as: ComponentsSupervisor
 
   alias Blogit.RepositoryProvider, as: Repository
-  alias Blogit.Components.Supervisor, as: ComponentsSupervisor
 
   @polling Application.get_env(:blogit, :polling, true)
   @poll_interval Application.get_env(:blogit, :poll_interval, 10_000)
@@ -131,7 +134,7 @@ defmodule Blogit.Server do
   end
 
   def handle_call({:get_posts, language}, {pid, _}, %{posts: posts} = state) do
-    names = Blogit.Settings.languages() |> Enum.map(&(Posts.name(&1)))
+    names = Settings.languages() |> Enum.map(&(Posts.name(&1)))
     ensure_caller(pid, names, posts[language], state)
   end
 
@@ -162,10 +165,10 @@ defmodule Blogit.Server do
   end
 
   defp init_state(repository_provider) do
-    repo = repository_provider.updated_repository
+    repo = repository_provider.repository()
     repository = %Repository{repo: repo, provider: repository_provider}
 
-    posts = Post.compile_posts(repository_provider.local_files(), repository)
+    posts = Post.compile_posts(repository_provider.list_files(), repository)
     configurations = Configuration.from_file(repository_provider)
 
     %__MODULE__{
@@ -179,10 +182,16 @@ defmodule Blogit.Server do
   end
 
   defp setup_components do
-    languages = Blogit.Settings.languages()
+    languages = Settings.languages()
     components = languages |> Enum.reduce([], fn language, current ->
       module = Blogit.Components.Configuration
-      [{module, language}, {Posts, language}, {PostsByDate, language} | current]
+      [
+        {module, language},
+        {Posts, language},
+        {PostsByDate, language},
+        {Metas, language}
+        | current
+      ]
     end)
 
     components |> Enum.each(fn (component) ->

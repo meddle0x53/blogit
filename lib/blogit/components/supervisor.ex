@@ -27,7 +27,7 @@ defmodule Blogit.Components.Supervisor do
   messages and has the data needed by the component processes loaded.
   """
   @spec start_link() :: Supervisor.on_start
-  def start_link() do
+  def start_link do
     Supervisor.start_link(__MODULE__, nil, name: __MODULE__)
   end
 

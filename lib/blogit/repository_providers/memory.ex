@@ -10,19 +10,23 @@ defmodule Blogit.RepositoryProviders.Memory do
 
   @behaviour Blogit.RepositoryProvider
 
+  alias Blogit.Settings
   alias Blogit.RepositoryProviders.Memory.RawPost
+
   @opaque t :: %__MODULE__{
     raw_posts: [RawPost.t], updates: [String.t], files: %{String.t => term}
   }
   defstruct [raw_posts: [], updates: [], files: %{}]
 
   defmodule RawPost do
+    @moduledoc false
+
     @opaque t :: %__MODULE__{
-      author: String.t, path: String.t, meta: String.t, content: String.t,
+      author: String.t, path: String.t, content: String.t,
       updated_at: String.t, created_at: String.t
     }
     defstruct [
-      :author, :path, :meta,
+      :author, :path,
       content: "# Title\n Some text...\n## Section 1\n Hey!!\n* i1\n * i2",
       updated_at: "2017-04-22 13:15:32", created_at: "2017-04-21 22:23:12"
     ]
@@ -74,7 +78,7 @@ defmodule Blogit.RepositoryProviders.Memory do
     Agent.get_and_update(__MODULE__,
     fn (%{updates: updates, raw_posts: raw_posts} = state) ->
       final_updates = [
-        Path.join(Blogit.Settings.posts_folder(), raw_post.path) | updates
+        Path.join(Settings.posts_folder(), raw_post.path) | updates
       ]
 
       {state, %{state |
@@ -109,7 +113,7 @@ defmodule Blogit.RepositoryProviders.Memory do
     fn (%{updates: updates, raw_posts: raw_posts} = state) ->
       updated_posts = Enum.filter(raw_posts, &(&1.path != raw_post.path))
       final_updates = [
-        Path.join(Blogit.Settings.posts_folder(), raw_post.path) | updates
+        Path.join(Settings.posts_folder(), raw_post.path) | updates
       ]
       {state, %{state |
         raw_posts: [raw_post | updated_posts], updates: final_updates
@@ -122,7 +126,6 @@ defmodule Blogit.RepositoryProviders.Memory do
   #############
 
   def repository, do: __MODULE__
-  def updated_repository, do: __MODULE__
 
   def fetch(_) do
     Agent.get_and_update(__MODULE__, fn (data) ->
@@ -134,7 +137,8 @@ defmodule Blogit.RepositoryProviders.Memory do
   end
 
   def local_path, do: "memory"
-  def local_files do
+
+  def list_files(_ \\ "") do
     Agent.get(__MODULE__, fn (%{raw_posts: posts}) ->
       posts |> Enum.map(fn (post) -> post.path end)
     end)
@@ -146,34 +150,23 @@ defmodule Blogit.RepositoryProviders.Memory do
     end)
   end
 
-  def file_author(_, file_name) do
-    get_post_property_value_by_file_name(:author, file_name)
+  def file_info(_, file_name) do
+    %{
+      author: file_author(file_name),
+      created_at: file_created_at(file_name),
+      updated_at: file_updated_at(file_name)
+    }
   end
 
-  def file_created_at(_, file_name) do
-    get_post_property_value_by_file_name(:created_at, file_name)
-  end
-
-  def file_updated_at(_, file_name) do
-    get_post_property_value_by_file_name(:updated_at, file_name)
-  end
-
-  def read_file!(file_name, _) do
-    get_post_property_value_by_file_name(:content, file_name)
-  end
-
-  def read_file(file_name, _ \\ "") do
-    files = Agent.get(__MODULE__, fn (%{files: files}) -> files end)
-    case files[file_name] do
-      nil -> {:error, :file_not_found}
-      data -> {:ok, data}
-    end
-  end
-
-  def read_meta_file(file_name, _) do
-    case get_post_property_value_by_file_name(:meta, file_name) do
-      nil -> {:error, "Nothing."}
-      meta -> {:ok, meta}
+  def read_file(file_name, folder \\ "") do
+    if folder == Settings.posts_folder() do
+      {:ok, get_post_property_value_by_file_name(:content, file_name)}
+    else
+      files = Agent.get(__MODULE__, fn (%{files: files}) -> files end)
+      case files[file_name] do
+        nil -> {:error, :file_not_found}
+        data -> {:ok, data}
+      end
     end
   end
 
@@ -192,5 +185,17 @@ defmodule Blogit.RepositoryProviders.Memory do
 
   defp find_by_file_name(posts, file_name) do
     posts |> Enum.find(fn (post) -> post.path == Path.basename(file_name) end)
+  end
+
+  defp file_author(file_name) do
+    get_post_property_value_by_file_name(:author, file_name)
+  end
+
+  defp file_created_at(file_name) do
+    get_post_property_value_by_file_name(:created_at, file_name)
+  end
+
+  defp file_updated_at(file_name) do
+    get_post_property_value_by_file_name(:updated_at, file_name)
   end
 end

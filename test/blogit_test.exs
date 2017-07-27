@@ -71,7 +71,7 @@ defmodule BlogitTest do
     returns N (maximum) posts beginning from the given `:from` position,
     newest first. N is the second argument given.
     """ do
-      names = Blogit.list_posts(from: 2, size: 3) |> Enum.map(&(&1.name))
+      names = [from: 2, size: 3] |> Blogit.list_posts() |> Enum.map(&(&1.name))
 
       assert names == ~w[otp nodes modules_functions_recursion]
     end
@@ -91,28 +91,29 @@ defmodule BlogitTest do
 
   describe ".filter_posts" do
     test "filters posts by author, the list is sorted with newest first" do
-      names = Blogit.filter_posts(%{"author" => "valo"}) |> Enum.map(& &1.name)
+      names =
+        %{"author" => "valo"} |> Blogit.filter_posts() |> Enum.map(& &1.name)
 
       assert names == ~w[plug modules_functions_recursion]
     end
 
     test "filters posts by category, the list is sorted with newest first" do
       names =
-        Blogit.filter_posts(%{"category" => "Some"}) |> Enum.map(& &1.name)
+        %{"category" => "Some"} |> Blogit.filter_posts() |> Enum.map(& &1.name)
 
       assert names == ~w[nodes]
     end
 
     test "filters posts by tags, the list is sorted with newest first" do
       names =
-        Blogit.filter_posts(%{"tags" => ~s[ab,cd]}) |> Enum.map(& &1.name)
+        %{"tags" => ~s[ab,cd]} |> Blogit.filter_posts() |> Enum.map(& &1.name)
 
       assert names == ~w[otp]
     end
 
     test "filters posts by year, the list is sorted with newest first" do
       names =
-        Blogit.filter_posts(%{"year" => "2016"}) |> Enum.map(& &1.name)
+        %{"year" => "2016"} |> Blogit.filter_posts() |> Enum.map(& &1.name)
 
       assert names == ~w[control_flow_and_errors]
     end

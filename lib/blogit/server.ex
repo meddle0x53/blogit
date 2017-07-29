@@ -2,18 +2,18 @@ defmodule Blogit.Server do
   @moduledoc """
   This module represents the core process of Blogit.
 
-  This process is responsible for loading the blog data from a repository,
+  The process is responsible for loading the blog data from a repository,
   using specified `Blogit.RepositoryProvider` implementation and keeping it
   converted into structures. The component processes use these structures
   as their state.
 
   If `polling` is configured to true, this process polls for changes in the
   source repository on interval, configured with `poll_interval`. By default
-  this interval is 10 seconds.
+  this interval is `10 seconds`.
 
   This process is started and supervised as worker by `Blogit.Supervisor`.
-  It uses Task processes to check for updated, which are supervised by the
-  Task.Supervisor process, started and supervised by `Blogit.Supervisor`.
+  It uses `Task` processes to check for updated, which are supervised by the
+  `Task.Supervisor` process, started and supervised by `Blogit.Supervisor`.
 
   If there are changes in the source repository, it is this process'
   responsibility to update the component processes.
@@ -38,7 +38,6 @@ defmodule Blogit.Server do
 
   alias Blogit.RepositoryProvider, as: Repository
 
-  @polling Application.get_env(:blogit, :polling, true)
   @poll_interval Application.get_env(:blogit, :poll_interval, 10_000)
 
   @enforce_keys [:repository, :posts, :configurations]
@@ -89,7 +88,7 @@ defmodule Blogit.Server do
   def handle_info(:setup_components, state) do
     setup_components()
 
-    try_check_after_interval(@polling, @poll_interval)
+    try_check_after_interval(Settings.polling?(), @poll_interval)
 
     {:noreply, state}
   end
@@ -120,7 +119,7 @@ defmodule Blogit.Server do
   end
 
   def handle_info({:DOWN, _, :process, _, _}, state) do
-    try_check_after_interval(@polling, @poll_interval)
+    try_check_after_interval(Settings.polling?(), @poll_interval)
     {:noreply, state}
   end
 

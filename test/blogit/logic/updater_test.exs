@@ -10,9 +10,11 @@ defmodule Blogit.Logic.UpdaterTest do
 
   setup do
     Application.ensure_all_started(:yaml_elixir)
+    Application.put_env(:blogit, :configuration_file, "blog.yml")
 
     on_exit fn ->
       Application.stop(:yaml_elixir)
+      Fixtures.stop()
     end
 
     Fixtures.posts_in_memory()

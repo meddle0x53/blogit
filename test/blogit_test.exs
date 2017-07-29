@@ -1,6 +1,7 @@
 defmodule BlogitTest do
   use ExUnit.Case
 
+  alias Blogit.Settings
   alias Blogit.RepositoryProviders.Memory
 
   defp wait_for_update do
@@ -19,7 +20,7 @@ defmodule BlogitTest do
 
     :sys.get_state(Process.whereis(Blogit.Server))
 
-    path = &(Path.join(Blogit.Settings.posts_folder(), &1.path))
+    path = &(Path.join(Settings.posts_folder(), &1.path))
     Agent.update(Memory, fn data ->
       %{data |
         raw_posts: Fixtures.posts(),
@@ -120,14 +121,13 @@ defmodule BlogitTest do
 
     test "filters posts by month, the list is sorted with newest first" do
       names =
-        Blogit.filter_posts(%{"month" => "5"}) |> Enum.map(& &1.name)
+        %{"month" => "5"} |> Blogit.filter_posts() |> Enum.map(& &1.name)
 
       assert names == ~w[mix control_flow_and_errors]
     end
 
     test "filters posts by query, the list is sorted with newest first" do
-      names =
-        Blogit.filter_posts(%{"q" => "Stuff"}) |> Enum.map(& &1.name)
+      names = %{"q" => "Stuff"} |> Blogit.filter_posts() |> Enum.map(& &1.name)
 
       assert names == ~w[processes]
     end
@@ -135,14 +135,14 @@ defmodule BlogitTest do
     test "filters posts by multiple types of filters, the list is sorted " <>
     "with newest first" do
       filters = %{"q" => "OTP", "author" => "meddle", "tags" => "ab"}
-      names = Blogit.filter_posts(filters) |> Enum.map(& &1.name)
+      names = filters |> Blogit.filter_posts() |> Enum.map(& &1.name)
 
       assert names == ~w[otp]
     end
 
     test "the list of posts returns all the posts meeting the filtering " <>
     "criteria by default" do
-      names = Blogit.filter_posts(%{}) |> Enum.map(& &1.name)
+      names = %{} |> Blogit.filter_posts() |> Enum.map(& &1.name)
 
       assert names == ~w[
         processes plug otp nodes modules_functions_recursion mix
@@ -151,7 +151,7 @@ defmodule BlogitTest do
     end
 
     test "the `from` option can be specified as the start position" do
-      names = Blogit.filter_posts(%{}, from: 1) |> Enum.map(& &1.name)
+      names = %{} |> Blogit.filter_posts(from: 1) |> Enum.map(& &1.name)
 
       assert names == ~w[
         plug otp nodes modules_functions_recursion mix control_flow_and_errors
@@ -160,7 +160,8 @@ defmodule BlogitTest do
 
     test "the `size` option can be used to change the default of " <>
       "`:infinity` posts returned" do
-      names = Blogit.filter_posts(%{}, from: 2, size: 2) |> Enum.map(& &1.name)
+      names =
+        %{} |> Blogit.filter_posts(from: 2, size: 2) |> Enum.map(& &1.name)
 
       assert names == ~w[otp nodes]
     end
@@ -205,7 +206,7 @@ defmodule BlogitTest do
         configurations: configuration, posts: posts, repository: repository
       } = :sys.get_state(Blogit.Server)
 
-      assert configuration == Blogit.Settings.languages() |> Enum.map(fn lang ->
+      assert configuration == Settings.languages() |> Enum.map(fn lang ->
         %Blogit.Models.Configuration{title: "Memory", language: lang}
       end)
       assert posts |> Map.values |> Enum.map(&Map.keys/1) == [

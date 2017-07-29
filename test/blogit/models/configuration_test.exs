@@ -4,6 +4,8 @@ defmodule Blogit.Models.ConfigurationTest do
 
   alias Blogit.Models.Configuration
 
+  setup_all do: Application.put_env(:blogit, :configuration_file, "blog.yml")
+
   setup do: Fixtures.setup()
 
   describe ".from_file" do

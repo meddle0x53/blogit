@@ -6,12 +6,8 @@ defmodule Blogit.Settings do
   through the other modules.
   """
 
-  @configuration_file Application.get_env(
-    :blogit, :configuration_file, "blog.yml"
-  )
   @posts_folder "posts"
   @meta_divider "\n---\n"
-  @max_lines_in_preview Application.get_env(:blogit, :max_lines_in_preview, 10)
 
   @doc """
   Retrieves the list of supported languages configured for `Blogit`.
@@ -94,11 +90,119 @@ defmodule Blogit.Settings do
     rest
   end
 
-  def configuration_file, do: @configuration_file
+  @doc """
+  Returns the path to the configuration file of `Blogit`. It can be configured
+  like this:
+  ```
+  config :blogit,
+         repository_url: some-url, repository_provider: some-provider,
+         configuration_file: path-to-the-file.yml
+  ```
 
+  By default it is in the root of the repository and called 'blog.yml'.
+
+  ## Examples
+
+      iex> Application.put_env(:blogit, :configuration_file, "my_conf.yml")
+      iex> Blogit.Settings.configuration_file()
+      "my_conf.yml"
+
+      iex> Application.delete_env(:blogit, :configuration_file) # Use default
+      iex> Blogit.Settings.configuration_file()
+      "blog.yml"
+  """
+  @spec configuration_file() :: String.t
+  def configuration_file do
+    Application.get_env(:blogit, :configuration_file, "blog.yml")
+  end
+
+  @doc """
+  Returns the string `"posts"` - the location of the posts folder in the
+  repository. A custom provider can opt to not use this default location, but
+  the `Blogit.RepositoryProviders.Git` provider expects posts to be located
+  in a folder named `posts` in the root of the repository.
+
+  ## Examples
+
+      iex> Blogit.Settings.posts_folder()
+      "posts"
+  """
+  @spec posts_folder() :: String.t
   def posts_folder, do: @posts_folder
 
+  @doc ~S"""
+  Returns the string `"\n---\n"` - the divider used to separate the meta data
+  from the post content in the post markdown files. It's advisable to have it on
+  two places - before and after the metadata:
+
+  ```
+  ---
+  author: Dali
+  ---
+
+  # My meta content
+  ```
+
+  ## Examples
+
+      iex> Blogit.Settings.meta_divider()
+      "\n---\n"
+  """
+  @spec meta_divider() :: String.t
   def meta_divider, do: @meta_divider
 
-  def max_lines_in_preview, do: @max_lines_in_preview
+  @doc """
+  Returns how many lines of the source file of a post should be used for
+  generating its preview. Can be configured in the `Blogit` configuration:
+
+  ```
+  config :blogit,
+         repository_url: some-url, repository_provider: some-provider,
+         max_lines_in_preview: 30
+  ```
+
+  If not configured its default value is `10`.
+
+  ## Examples
+
+      iex> Application.put_env(:blogit, :max_lines_in_preview, 30)
+      iex> Blogit.Settings.max_lines_in_preview()
+      30
+
+      iex> Application.delete_env(:blogit, :max_lines_in_preview) # Use default
+      iex> Blogit.Settings.max_lines_in_preview()
+      10
+  """
+  @spec max_lines_in_preview() :: pos_integer
+  def max_lines_in_preview do
+    Application.get_env(:blogit, :max_lines_in_preview, 10)
+  end
+
+  @doc """
+  Returns true if polling the source repository for changes is configured to be
+  'on'. That can be done like this:
+  ```
+  config :blogit,
+         repository_url: some-url, repository_provider: some-provider,
+         polling: true
+  ```
+
+  The default is `true` if it is not configured.
+
+  ## Examples
+
+      iex> Application.put_env(:blogit, :polling, true)
+      iex> Blogit.Settings.polling?()
+      true
+
+      iex> Application.put_env(:blogit, :polling, false)
+      iex> Blogit.Settings.polling?()
+      false
+
+      iex> Application.delete_env(:blogit, :polling) # Use default
+      iex> Blogit.Settings.polling?()
+      true
+  """
+  @spec polling?() :: boolean
+  def polling?, do: Application.get_env(:blogit, :polling, true)
 end

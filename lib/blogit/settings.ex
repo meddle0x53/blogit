@@ -205,4 +205,30 @@ defmodule Blogit.Settings do
   """
   @spec polling?() :: boolean
   def polling?, do: Application.get_env(:blogit, :polling, true)
+
+  @doc """
+  Returns the interval used when polling the source repository for changes.
+  It is used only if `Blogit.Settings.polling?()` returns `true`.
+  The value is the interval in milliseconds. The configuration is specified
+  in seconds, like this:
+  ```
+  config :blogit,
+         repository_url: some-url, repository_provider: some-provider,
+         polling: true, poll_interval: 50
+  ```
+
+  The default is `10_000` for ten seconds.
+
+  ## Examples
+
+      iex> Application.put_env(:blogit, :poll_interval, 60)
+      iex> Blogit.Settings.poll_interval()
+      60_000
+
+      iex> Application.delete_env(:blogit, :poll_interval) # Use default
+      iex> Blogit.Settings.poll_interval()
+      10_000
+  """
+  @spec poll_interval() :: pos_integer
+  def poll_interval, do: Application.get_env(:blogit, :poll_interval, 10) * 1000
 end

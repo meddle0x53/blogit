@@ -31,14 +31,10 @@ defmodule Blogit.Server do
   alias Blogit.Models.Post
   alias Blogit.Models.Configuration
 
-  alias Blogit.Components.Posts
-  alias Blogit.Components.Metas
-  alias Blogit.Components.PostsByDate
+  alias Blogit.Components.{Posts, Metas, PostsByDate}
   alias Blogit.Components.Supervisor, as: ComponentsSupervisor
 
   alias Blogit.RepositoryProvider, as: Repository
-
-  @poll_interval Application.get_env(:blogit, :poll_interval, 10_000)
 
   @enforce_keys [:repository, :posts, :configurations]
   @type t :: %__MODULE__{
@@ -47,9 +43,9 @@ defmodule Blogit.Server do
   }
   defstruct [:repository, :posts, :configurations]
 
-  ##########
-  # Client #
-  ##########
+  #######
+  # API #
+  #######
 
   @doc """
   Starts the `Blogit.Server` process.
@@ -68,14 +64,12 @@ defmodule Blogit.Server do
   """
   @spec start_link(module) :: GenServer.on_start
   def start_link(repository_provider) do
-    GenServer.start_link(
-      __MODULE__, repository_provider, name: __MODULE__
-    )
+    GenServer.start_link(__MODULE__, repository_provider, name: __MODULE__)
   end
 
-  ##########
-  # Server #
-  ##########
+  #############
+  # Callbacks #
+  #############
 
   def init(repository_provider) when is_atom(repository_provider) do
     state = init_state(repository_provider)
@@ -88,7 +82,7 @@ defmodule Blogit.Server do
   def handle_info(:setup_components, state) do
     setup_components()
 
-    try_check_after_interval(Settings.polling?(), @poll_interval)
+    try_check_after_interval(Settings.polling?(), Settings.poll_interval())
 
     {:noreply, state}
   end
@@ -119,7 +113,7 @@ defmodule Blogit.Server do
   end
 
   def handle_info({:DOWN, _, :process, _, _}, state) do
-    try_check_after_interval(Settings.polling?(), @poll_interval)
+    try_check_after_interval(Settings.polling?(), Settings.poll_interval())
     {:noreply, state}
   end
 

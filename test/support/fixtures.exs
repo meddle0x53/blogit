@@ -64,6 +64,19 @@ defmodule Fixtures do
       """
     },
     %RawPost{
+      author: "meddle", path: "pro_nodes.md", created_at: "2017-06-10 18:52:49",
+      updated_at: "2017-06-10 18:52:49",
+      content: """
+      ---
+      pinned: true
+      category: Some
+      published: false
+      ---
+
+      # Title\n Some text...\n## Section 1\n Hey!!\n* i1\n * i2
+      """
+    },
+    %RawPost{
       author: "meddle", path: "nodes.md", created_at: "2017-06-10 18:52:49",
       updated_at: "2017-06-10 18:52:49",
       content: """

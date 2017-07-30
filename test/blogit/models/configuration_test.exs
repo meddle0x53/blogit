@@ -2,6 +2,7 @@ defmodule Blogit.Models.ConfigurationTest do
   use ExUnit.Case
   doctest Blogit.Models.Configuration
 
+  alias Blogit.Settings
   alias Blogit.Models.Configuration
 
   setup_all do: Application.put_env(:blogit, :configuration_file, "blog.yml")
@@ -13,7 +14,7 @@ defmodule Blogit.Models.ConfigurationTest do
     %{repository: repository} do
       configuration = Configuration.from_file(repository.provider)
 
-      assert configuration == Blogit.Settings.languages() |> Enum.map(fn lang ->
+      assert configuration == Settings.languages() |> Enum.map(fn lang ->
         %Configuration{title: "Memory", language: lang}
       end)
     end
@@ -64,8 +65,9 @@ defmodule Blogit.Models.ConfigurationTest do
       }
     end
 
-    test "TODO", %{repository: repository} do
-      current_languages = Blogit.Settings.languages()
+    test "creates configurations for every supported language if " <>
+    "there are multiple languages", %{repository: repository} do
+      current_languages = Settings.languages()
       Application.put_env(:blogit, :languages, ~w(en bg de))
 
       yml = """

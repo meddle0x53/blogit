@@ -26,7 +26,7 @@ defmodule Blogit.Models.PostTest do
       assert post.html == "<p>Stuff</p>\n"
     end
 
-    test "stores the meta-data retrieved as 'meta'", %{post: post} do
+    test "stores the meta data retrieved as 'meta'", %{post: post} do
       assert post.meta == %Meta{
         author: "meddle", title: "Processes", tags: [],
         pinned: false, published: true, name: "processes",
@@ -34,6 +34,44 @@ defmodule Blogit.Models.PostTest do
         updated_at: ~N[2017-04-22 13:15:32],
         year: "2017", month: "6", language: "bg", preview: "<p>Stuff</p>\n"
       }
+    end
+
+    test "if the source file contains meta data, it is removed from the " <>
+    "html of the post and used for the meta", %{repository: repository} do
+      lang = Blogit.Settings.default_language()
+      post = Post.from_file("nodes.md", repository, lang)
+
+      assert post.html == """
+      <p> Some text…</p>\n<h2>Section 1</h2>\n<p> Hey!!</p>\n<ul>\n<li>i1
+      </li>\n<li>i2\n</li>\n</ul>
+      """
+
+      assert post.meta == %Meta{
+        author: "meddle", title: "Title", tags: [],
+        pinned: true, published: true, name: "nodes",
+        category: "Some",
+        created_at: ~N[2017-06-10 18:52:49],
+        updated_at: ~N[2017-06-10 18:52:49],
+        year: "2017", month: "6", language: "bg",
+        preview: "<p> Some text…</p>\n<h2>Section 1</h2>\n<p> Hey!!</p>\n" <>
+        "<ul>\n<li>i1\n</li>\n<li>i2\n</li>\n</ul>\n"
+      }
+    end
+
+    test "if the file located at the given `file_path` is not in the " <>
+    "repository, returns :source_file_not_found", %{repository: repository} do
+      lang = Blogit.Settings.default_language()
+      result = Post.from_file("djasdhasjk.md", repository, lang)
+
+      assert result == :source_file_not_found
+    end
+   test "if the meta data of the post to be created has `published: false` " <>
+    "`post.html` will be `nil`", %{repository: repository} do
+      lang = Blogit.Settings.default_language()
+      post = Post.from_file("pro_nodes.md", repository, lang)
+
+      assert is_nil(post.html)
+      refute post.meta.published
     end
   end
 

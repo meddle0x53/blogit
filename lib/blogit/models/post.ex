@@ -1,23 +1,27 @@
 defmodule Blogit.Models.Post do
   @moduledoc """
-  Represents a post in a blog.
+  A module holding the representation of a post in a blog and helper functions
+  for it.
 
-  Contains an unique name of the post, which identifies it,
-  the raw content of the post in markdown,
+  The `Blogit.Models.Post` struct contains an unique name of the post,
+  which identifies it, the raw content of the post in markdown,
   html version of the post content and meta information.
 
-  The meta information is contained in a `Blogit.Models.Post.Meta` structure.
+  The meta information is contained in a `Blogit.Models.Post.Meta` struct.
 
   Usually a post is created by invoking the `Blogit.Models.Post.from_file/2`
   function.
-  This function takes a provider for access to repository, a file path and a
-  repository. It uses them to read the file and generate the Post structure.
+  This function takes a module implementing the `Blogit.RepositoryProvider`
+  behaviour for access to a repository, a file path and a
+  `Blogit.RepositoryProvider` struct.
+  It uses them to read the file and generate the `Bogit.Models.Post` struct.
 
   The `Blogit.Models.Post.compile_posts/2` function is able to create a list
-  of multiple Post structures using a list of files and repository.
+  of multiple `Blogit.Models.Post` structs using a list of files and a
+  `Blogit.RepositoryProvider` struct.
 
   The module contains a set of utility methods for working with
-  `Blogit.Models.Post` structures.
+  `Blogit.Models.Post` structs.
   """
 
   alias Blogit.Models.Post.Meta
@@ -31,19 +35,31 @@ defmodule Blogit.Models.Post do
   defstruct [:name, :raw, :html, :meta]
 
   @doc """
-  Creates a Post structure from a file stored in a repository.
+  Creates a `Blogit.Models.Post` struct from a file stored in a repository.
 
   The name of the file is used as the name of the post.
-  For example the Post structure created from the file `some_post.md`
+  For example the struct created from the file `some_post.md`
   will have `post.name == "some_post"`.
 
-  The given file path should be located in the given repository.
+  The given `file_path` should be located in the given `repository`.
+
+  The result struct will have `meta` created by invoking
+  `Blogit.Models.Post.Meta.from_file/5` with the given `file_path`,
+  `repository` and `language`, the `name` of the post and the markdown data
+  read from the file.
+
+  If the source file located at the given `file_path` doesn't exist, the
+  atom `:source_file_not_found` is returned as a result.
+
+  If the meta data of the post to be created has `published: false`,
+  `post.html` won't be generated and will be `nil`.
   """
-  @spec from_file(String.t, Repository.t, String.t) :: t
+  @type from_file_result :: t | :source_file_not_found
+  @spec from_file(String.t, Repository.t, String.t) :: from_file_result
   def from_file(file_path, repository, language) do
     name = name_from_file(file_path, language)
     case repository.provider.read_file(file_path, posts_folder()) do
-      {:error, _} -> %__MODULE__{name: name, raw: nil, html: nil, meta: nil}
+      {:error, _} -> :source_file_not_found
       {:ok, raw} ->
         data =
           if String.contains?(raw, meta_divider()) do
@@ -93,7 +109,7 @@ defmodule Blogit.Models.Post do
       end)
       |> Enum.map(&Path.join/1)
       |> Enum.map(fn(file) -> from_file(file, repository, language) end)
-      |> Enum.reject(&(is_nil(&1.raw)))
+      |> Enum.reject(&(&1 == :source_file_not_found || is_nil(&1.raw)))
       |> Enum.filter(&(&1.meta.published))
       |> Enum.map(fn(post) -> {String.to_atom(post.name), post} end)
       |> Enum.into(%{})

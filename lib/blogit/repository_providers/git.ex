@@ -8,13 +8,13 @@ defmodule Blogit.RepositoryProviders.Git do
   If the git repository is not accessible in the moment the locally checked one
   will be used and won't be updated.
 
-  The URL to the git repository have to be specified using the :blogit setting
-  :repository_url in the configuration.
+  The URL to the git repository have to be specified using the `:blogit` setting
+  `:repository_url` in the configuration.
 
-  The main folder containing the posts could be specified with the :posts_folder
-  setting. By default it is the root of the git repository.
+  The main folder containing the posts should be in the root of the repository.
+  Uts name should be *posts*.
 
-  For author of a post markdown file
+  For the author of a post markdown file
   (if not specified manually in the meta data) is used the creator of the file
   in the git repository. For creation date is used the date of the first
   commit of the file and for the last update date is used the date of the last
@@ -39,7 +39,7 @@ defmodule Blogit.RepositoryProviders.Git do
               |> String.trim_trailing(".git")
 
   #############
-  # Behaviour #
+  # Callbacks #
   #############
 
   def repository do

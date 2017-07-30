@@ -1,7 +1,7 @@
 defmodule Blogit.RepositoryProvider do
   @moduledoc """
   A behaviour module for implementing access to remote or local repository
-  with files from which a blog and its posts can be built.
+  containing files which can be used as a source for a blog and its posts.
 
   A provider to a repository should be able to check if files exist in it,
   if files were updated or deleted, to check the author of a file and its
@@ -13,12 +13,12 @@ defmodule Blogit.RepositoryProvider do
   `Blogit.RepositoryProviders.Git`.
 
   An example of implementing this behaviour could be a local folder.
-  When a new files are added, modified and removed the
+  When new files are added, modified and removed the
   `Blogit.RepositoryProvider.fetch/1` should have in its result the paths of
-  these files. The meta data of the file can be used as  meta data
+  these files. The meta data of the file can be used as meta data
   and creation and last update dates. The author of the file could be its owner.
-  The repository structure could contain absolute path to the parent folder
-  of the folder representing the repository and the
+  The `Blogit.RepositoryProvider` struct could contain absolute path
+  to the parent folder of the folder representing the repository and the
   `Blogit.RepositoryProvider.local_path/0` could return its name.
 
   For now `Blogit` comes with two implementations.
@@ -44,12 +44,11 @@ defmodule Blogit.RepositoryProvider do
   defstruct [:repo, :provider]
 
   @doc """
-  Invoked to get a representation structure of the repository the provider
-  manages.
-  All the actual data represented by this structure will be updated to its
-  newest versions first.
+  Invoked to get a representation value of the repository the provider manages.
+  The actual data represented by this struct should be updated to its
+  newest version first.
 
-  If, for example the repository is remote, all the files in it should be
+  If for example the repository is remote, all the files in it should be
   downloaded so their most recent versions are accessible.
 
   This structure can be passed to other callbacks in order to manage files
@@ -63,16 +62,21 @@ defmodule Blogit.RepositoryProvider do
 
   If, for example the repository is remote, all the files in it should be
   downloaded so their most recent versions are accessible.
+
+  Returns the path to the changed files in the form of the tuple
+  `{:updates, list-of-paths}`. These paths should be paths to deleted, updated
+  or newly created files.
   """
   @callback fetch(repository) :: fetch_result
 
   @doc """
-  Invoked to get the path to the locally downloaded data.
+  Invoked to get the path to the locally downloaded data. If the repository
+  is remote, it should have local copy or something like that.
   """
   @callback local_path() :: String.t
 
   @doc """
-  Invoked to get a list of file paths of the files contained in the locally
+  Invoked to get a list of file paths of set of files contained in the locally
   downloaded repository.
   """
   @callback list_files(folder) :: [file_path]
@@ -82,6 +86,18 @@ defmodule Blogit.RepositoryProvider do
   """
   @callback file_in?(file_path) :: boolean
 
+  @doc """
+  Returns file information for the file located at the given `file_path` in
+  the given `repository`. The result should be in the form of a map and should
+  be structured like this:
+  ```
+  %{
+    "author" => the-file-author,
+    "created_at" => the-date-the-file-was-created-in-iso-8601-format,
+    "updated_at" => the-date-of-the-last-update-of-the-file-in-iso-8601-format
+  }
+  ```
+  """
   @callback file_info(repository, file_path) :: %{atom => String.t | timestamp}
 
   @doc """

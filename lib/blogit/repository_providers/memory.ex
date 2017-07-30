@@ -2,10 +2,10 @@ defmodule Blogit.RepositoryProviders.Memory do
   @moduledoc """
   This module implements the `Blogit.RepositoryProvider` behaviour.
 
-  It provides an in-memory repository access which can be used for testing.
+  It provides in-memory repository access which can be used for testing.
 
-  The repository is just an Agent process, so messages could be sent to it
-  in order to make add or remove data to or from it.
+  The repository is just an `Agent` process, so messages could be sent to it
+  in order to add or remove data to or from it.
   """
 
   @behaviour Blogit.RepositoryProvider
@@ -32,15 +32,15 @@ defmodule Blogit.RepositoryProviders.Memory do
     ]
   end
 
-  ############
-  # Specific #
-  ############
+  #######
+  # API #
+  #######
 
   @doc """
-  Starts the memory repository as a process. The process is names and
+  Starts the memory repository as a process. The process is named and
   its name is the name of this module.
 
-  Accepts parameter of type `Blogit.RepositoryProviders.Memory.t`. By default
+  Accepts argument of type `Blogit.RepositoryProviders.Memory.t`. By default
   the repository is empty.
   """
   @spec start_link(t) :: {:ok, pid} | {:error, term}
@@ -49,14 +49,14 @@ defmodule Blogit.RepositoryProviders.Memory do
   end
 
   @doc """
-  Stops the memory repository process.
+  Stops the in-memory repository process.
   """
   @spec stop() :: :ok
   def stop, do: Agent.stop(__MODULE__)
 
   @doc """
-  Adds a file to the in-memory repository using the given file_path as path
-  to the file to create and the data as its contents.
+  Adds a file to the in-memory repository using the given `file_path` as path
+  to the file to create and the given `data` as its contents.
 
   Returns the state of the repository before the modification.
   """
@@ -104,7 +104,7 @@ defmodule Blogit.RepositoryProviders.Memory do
 
   @doc """
   Replaces an existing post from the in-memory repository with new content.
-  If the post doesn't exit, creates it. Returns the state of the repository
+  If the post doesn't exist, creates it. Returns the state of the repository
   before the modification.
   """
   @spec replace_post(RawPost.t) :: t
@@ -122,7 +122,7 @@ defmodule Blogit.RepositoryProviders.Memory do
   end
 
   #############
-  # Behaviour #
+  # Callbacks #
   #############
 
   def repository, do: __MODULE__
@@ -160,7 +160,10 @@ defmodule Blogit.RepositoryProviders.Memory do
 
   def read_file(file_name, folder \\ "") do
     if folder == Settings.posts_folder() do
-      {:ok, get_post_property_value_by_file_name(:content, file_name)}
+      case get_post_property_value_by_file_name(:content, file_name) do
+        nil -> {:error, :file_not_found}
+        data -> {:ok, data}
+      end
     else
       files = Agent.get(__MODULE__, fn (%{files: files}) -> files end)
       case files[file_name] do

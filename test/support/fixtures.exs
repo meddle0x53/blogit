@@ -1,4 +1,6 @@
 defmodule Fixtures do
+  alias ExUnit.Callbacks
+
   alias Blogit.RepositoryProviders.Memory
   alias Blogit.RepositoryProviders.Memory.RawPost
   alias Blogit.RepositoryProvider, as: Repository
@@ -100,6 +102,7 @@ defmodule Fixtures do
   end
 
   def stop do
+    Application.stop(:yaml_elixir)
     pid = Process.whereis(Memory)
 
     if !is_nil(pid) && Process.alive?(pid) do
@@ -108,9 +111,12 @@ defmodule Fixtures do
   end
 
   def setup do
+    Application.put_env(:blogit, :languages, ~w(bg en))
+    Application.ensure_all_started(:yaml_elixir)
+
     result = Fixtures.posts_in_memory()
 
-    ExUnit.Callbacks.on_exit(&Fixtures.stop/0)
+    Callbacks.on_exit(&Fixtures.stop/0)
 
     result
   end

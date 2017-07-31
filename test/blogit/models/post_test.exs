@@ -7,7 +7,7 @@ defmodule Blogit.Models.PostTest do
 
   setup do: Fixtures.setup()
 
-  describe ".from_file" do
+  describe "from_file" do
     setup %{repository: repository} = context do
       lang = Blogit.Settings.default_language()
       post = Post.from_file("processes.md", repository, lang)
@@ -75,11 +75,12 @@ defmodule Blogit.Models.PostTest do
     end
   end
 
-  describe ".compile_posts" do
+  describe "compile_posts" do
     test """
-    successfully creates a map with keys the names of the posts as atoms
-    and values the parsed posts from the given repository at the given
-    locations
+    creates a maps with keys the names of the posts as atoms
+    and values - the parsed posts from the given repository at the given
+    locations. Returns a map with keys - each supported language and values
+    the maps of posts created
     """, %{repository: repository} do
       posts = Post.compile_posts(~w(mix.md processes.md), repository)
 
@@ -123,6 +124,32 @@ defmodule Blogit.Models.PostTest do
         Map.put(current, language, %{})
       end)
       assert posts == expected
+    end
+
+    test "handles posts with the same name for different languages",
+    %{repository: repository} do
+      posts = Post.compile_posts(~w(mix.md en/mix.md), repository)
+      post_names = posts
+                   |> Enum.map(fn {key, map} -> {key, Map.keys(map)} end)
+                   |> Enum.into(%{})
+
+      assert post_names == %{"bg" => [:mix], "en" => [:mix]}
+    end
+
+    test "skips posts with not found source files", %{repository: repository} do
+      posts = Post.compile_posts(~w(mix.md en/dadada.md), repository)
+      post_names = posts
+                   |> Enum.flat_map(fn {_, map} -> Map.keys(map) end)
+
+      assert post_names == [:mix]
+    end
+
+    test "skips not published posts", %{repository: repository} do
+      posts = Post.compile_posts(~w(mix.md pro_nodes.md), repository)
+      post_names = posts
+                   |> Enum.flat_map(fn {_, map} -> Map.keys(map) end)
+
+      assert post_names == [:mix]
     end
   end
 end

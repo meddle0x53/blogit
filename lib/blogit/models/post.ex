@@ -84,15 +84,20 @@ defmodule Blogit.Models.Post do
   end
 
   @doc """
-  Creates a map with keys the names of the posts created from parsing the
-  files at the given list of paths and values the posts structures created.
+  Returns a map of maps. For every supported language, returned by invoking
+  `Blogit.Settings.languages/0`, the result of a call to this function will
+  have a key, representing it.
+  The value for every such key will be a map with keys the names
+  of the posts created from parsing the files in the directory representing the
+  language in the given list of paths and values the post structs created.
 
-  Uses from_file/2 to parse the files and create the Post structures.
+  Uses from_file/2 to parse the files and create the `Blogit.Models.Post`
+  structs.
 
-  Skips all the non-markdown files as well as the ones located in the folders
-  `slides/` and `pages/`
+  Skips all the non-markdown files as well as the ones that mark the post
+  content as not published or does not exist in the given `repository`.
   """
-  @spec compile_posts([String.t], Repository.t) :: %{atom => t}
+  @spec compile_posts([String.t], Repository.t) :: %{String.t => %{atom => t}}
   def compile_posts(list, repository) when is_list(list) do
     file_paths = list
     |> Enum.filter(fn(f) -> String.ends_with?(f, ".md") end)
@@ -147,7 +152,7 @@ defmodule Blogit.Models.Post do
   end
 
   @doc """
-  Sorts a list of Post structures by the given meta field.
+  Sorts a list of `Blogit.Models.Post` strucs by the given meta field.
 
   By default this field is `created_at`.
   Note that the sort is descending.
@@ -176,6 +181,25 @@ defmodule Blogit.Models.Post do
       iex> sorted = Blogit.Models.Post.sorted(posts)
       iex> sorted |> Enum.map(fn (post) -> post.name end)
       ["newest", "last", "very old", "first"]
+
+      iex> alias Blogit.Models.Post.Meta
+      iex> posts = [
+      ...>   %Blogit.Models.Post{
+      ...>     name: "first", raw: "", html: "",
+      ...>     meta: %Meta{updated_at: ~N[2017-02-14 22:23:12]}
+      ...>   },
+      ...>   %Blogit.Models.Post{
+      ...>     name: "very old", raw: "", html: "",
+      ...>     meta: %Meta{updated_at: ~N[2017-03-01 07:42:56]}
+      ...>   },
+      ...>   %Blogit.Models.Post{
+      ...>     name: "last_updated", raw: "", html: "",
+      ...>     meta: %Meta{updated_at: ~N[2017-04-20 12:23:12]}
+      ...>   }
+      ...> ]
+      iex> sorted = Blogit.Models.Post.sorted(posts, :updated_at)
+      iex> sorted |> Enum.map(fn (post) -> post.name end)
+      ["last_updated", "very old", "first"]
   """
   @spec sorted([t], atom) :: [t]
   def sorted(posts, meta_field \\ :created_at) do
@@ -191,8 +215,8 @@ defmodule Blogit.Models.Post do
 
   The first element of a tuple is a year.
   The second is a month number.
-  The third is a counter - how many posts are created during the month
-  and the year.
+  The third is a counter - how many posts are created during that month
+  and that year.
 
   The tuples are sorted from the newest to the oldest, using the years
   and the months.

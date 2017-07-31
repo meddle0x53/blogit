@@ -77,6 +77,10 @@ defmodule Blogit.Models.Configuration do
     Enum.member?(updates, configuration_file())
   end
 
+  ###########
+  # Private #
+  ###########
+
   defp from_path({:error, _}, repository_provider) do
     default_result(from_defaults(repository_provider))
   end

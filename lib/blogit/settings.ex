@@ -27,9 +27,9 @@ defmodule Blogit.Settings do
 
   ## Examples
 
-      iex> Application.put_env(:blogit, :languages, ["es"])
+      iex> Application.put_env(:blogit, :languages, ["bg"])
       iex> Blogit.Settings.languages()
-      ["es"]
+      ["bg"]
 
       iex> Application.delete_env(:blogit, :languages) # Use default
       iex> Blogit.Settings.languages()
@@ -51,9 +51,9 @@ defmodule Blogit.Settings do
 
   ## Examples
 
-      iex> Application.put_env(:blogit, :languages, ["es", "bg", "de"])
+      iex> Application.put_env(:blogit, :languages, ["bg", "de"])
       iex> Blogit.Settings.default_language()
-      "es"
+      "bg"
 
       iex> Application.delete_env(:blogit, :languages) # Use default
       iex> Blogit.Settings.default_language()

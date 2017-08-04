@@ -152,65 +152,6 @@ defmodule Blogit.Models.Post do
   end
 
   @doc """
-  Sorts a list of `Blogit.Models.Post` strucs by the given meta field.
-
-  By default this field is `created_at`.
-  Note that the sort is descending.
-
-  ## Examples
-
-      iex> alias Blogit.Models.Post.Meta
-      iex> posts = [
-      ...>   %Blogit.Models.Post{
-      ...>     name: "first", raw: "", html: "",
-      ...>     meta: %Meta{created_at: ~N[2017-02-14 22:23:12]}
-      ...>   },
-      ...>   %Blogit.Models.Post{
-      ...>     name: "newest", raw: "", html: "",
-      ...>     meta: %Meta{created_at: ~N[2017-04-22 14:53:45]}
-      ...>   },
-      ...>   %Blogit.Models.Post{
-      ...>     name: "very old", raw: "", html: "",
-      ...>     meta: %Meta{created_at: ~N[2017-03-01 07:42:56]}
-      ...>   },
-      ...>   %Blogit.Models.Post{
-      ...>     name: "last", raw: "", html: "",
-      ...>     meta: %Meta{created_at: ~N[2017-04-20 12:23:12]}
-      ...>   }
-      ...> ]
-      iex> sorted = Blogit.Models.Post.sorted(posts)
-      iex> sorted |> Enum.map(fn (post) -> post.name end)
-      ["newest", "last", "very old", "first"]
-
-      iex> alias Blogit.Models.Post.Meta
-      iex> posts = [
-      ...>   %Blogit.Models.Post{
-      ...>     name: "first", raw: "", html: "",
-      ...>     meta: %Meta{updated_at: ~N[2017-02-14 22:23:12]}
-      ...>   },
-      ...>   %Blogit.Models.Post{
-      ...>     name: "very old", raw: "", html: "",
-      ...>     meta: %Meta{updated_at: ~N[2017-03-01 07:42:56]}
-      ...>   },
-      ...>   %Blogit.Models.Post{
-      ...>     name: "last_updated", raw: "", html: "",
-      ...>     meta: %Meta{updated_at: ~N[2017-04-20 12:23:12]}
-      ...>   }
-      ...> ]
-      iex> sorted = Blogit.Models.Post.sorted(posts, :updated_at)
-      iex> sorted |> Enum.map(fn (post) -> post.name end)
-      ["last_updated", "very old", "first"]
-  """
-  @spec sorted([t], atom) :: [t]
-  def sorted(posts, meta_field \\ :created_at) do
-    Enum.sort(posts, fn (post1, post2) ->
-      Calendar.NaiveDateTime.before?(
-        Map.get(post2.meta, meta_field), Map.get(post1.meta, meta_field)
-      )
-    end)
-  end
-
-  @doc """
   Calculates a list of tuples of three elements from the given list of posts.
 
   The first element of a tuple is a year.

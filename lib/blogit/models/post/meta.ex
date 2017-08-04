@@ -2,21 +2,15 @@ defmodule Blogit.Models.Post.Meta do
   @moduledoc """
   Represents the meta-data of a post.
 
-  Provides function to read/parse the meta information from a file.
+  Provides a function to read/parse the meta information from a file.
   All the meta-fields have default values.
-  The meta information can be defined in different places.
 
-  The highest priority place is the post itself. There is a configuration
-  for `meta_divider` and the meta information can be stored at the top of the
+  The meta information can be stored at the top of the
   markdown file's content in YAML format. The markdown content and meta-data
-  are divided using the `meta_divider`.
+  are divided using the `\n---\n`. This yml meta data has the highest priority
+  when `Blogit.Models.Post.Meta` struct is created from a post source file.
 
-  With lower priority are files stored in a sub folder of the folder containing
-  the post markdown files, called `meta/`. If a post content is stored in a file
-  called `some_post.md`, its meta-data have to be stored in a YAML file,
-  located at `meta/some_post.yml`.
-
-  With the lowest priority are the defaults and values read from the repository
+  With lower priority are the defaults and values read from the repository
   containing the file.
   """
 
@@ -38,8 +32,13 @@ defmodule Blogit.Models.Post.Meta do
   ]
 
   @doc """
-  Creates a Post.Meta structure using the source file of a Post, its raw data
-  and the repository containing the blog data.
+  Creates a `Blogit.Models.Post.Meta` struct using the source file of a post,
+  its raw data, the language of the post, the name of the post  and the
+  repository containing the blog data.
+
+  The given `raw_meta` should be list with two elements, the first element
+  should be an YAML string containing the meta-data and the second the post's
+  raw content.
   """
   @spec from_file(String.t, Repository.t, [String.t], String.t, String.t) :: t
   def from_file(file_path, repository, raw_data, name, language) do
@@ -51,6 +50,33 @@ defmodule Blogit.Models.Post.Meta do
     create_from_map(meta, file_path, repository, post_data)
   end
 
+  @doc """
+  Sorts a list of `Blogit.Models.Post.Meta` strucs by the given field.
+  The field can be either `:created_at` or `updated_at`.
+
+  By default this field is `created_at`. Note that the sort is descending.
+
+  ## Examples
+
+      iex> alias Blogit.Models.Post.Meta
+      iex> metas = [
+      ...>   %Meta{created_at: ~N[2017-02-14 22:23:12], name: "meta1"},
+      ...>   %Meta{created_at: ~N[2017-04-22 14:53:45], name: "meta2"},
+      ...>   %Meta{created_at: ~N[2017-03-01 07:42:56], name: "meta3"}
+      ...> ]
+      iex> Meta.sorted(metas) |> Enum.map(fn (meta) -> meta.name end)
+      ~w[meta2 meta3 meta1]
+
+      iex> alias Blogit.Models.Post.Meta
+      iex> metas = [
+      ...>   %Meta{updated_at: ~N[2017-03-01 07:42:56], name: "meta2"},
+      ...>   %Meta{updated_at: ~N[2017-02-14 22:23:12], name: "meta1"},
+      ...>   %Meta{updated_at: ~N[2017-04-20 12:23:12], name: "meta3"}
+      ...> ]
+      iex> Meta.sorted(metas, :updated_at) |> Enum.map(&(&1.name))
+      ~w[meta3 meta2 meta1]
+  """
+  @spec sorted([t], atom) :: [t]
   def sorted(metas, field \\ :created_at) do
     Enum.sort(metas, fn (meta1, meta2) ->
       Calendar.NaiveDateTime.before?(

@@ -10,14 +10,42 @@ defmodule Blogit.Models.Configuration do
   logo_path: <path to logo for the blog>
   background_image_path: <path to image at the top of the feed as background>
   styles_path: <path to css file with custom styles for the blog>
-  languages:
-    - bg
-    - en
+  social:
+    rss: <show-rss-feed>(true/false)
+    stars_for_blogit: <show-give-stars-for-blogit-links>(true/false)
+    twitter: <twitter-id>
+    facebook: <facebook-id>
+    gihub: <github-id>
   ```
 
   All of these properties are optional and there are defaults for them.
-  For example the default title of the blog is the name of the repository,
-  updated a bit.
+  For example the default title of the blog is the transformed name of the
+  repository (name: 'my_repo' |> title: 'My Repo').
+
+  For every language code, returned by `Blogit.Settings.languages/0` the
+  file can have sub-section with custom settings. The configurations for
+  the additional languages extend on the configuration of the default language.
+
+  ```
+  title: <title>
+  sub_title: <a-sub-title-for-the-blog>
+  logo_path: <path to logo for the blog>
+  background_image_path: <path to image at the top of the feed as background>
+  styles_path: <path to css file with custom styles for the blog>
+  social:
+    rss: <show-rss-feed>(true/false)
+    stars_for_blogit: <show-give-stars-for-blogit-links>(true/false)
+    twitter: <twitter-id>
+    facebook: <facebook-id>
+    gihub: <github-id>
+  bg:
+    title: <title-in-bulgarian>
+  ```
+
+  If the default language is `en` for English in the above example,
+  the configuration for the Bulgarian language (`bg`) will be the same as the
+  English one, but will another title, the one specified under `bg`. All the
+  other supported keys can have custom values under `bg`.
   """
 
   import Blogit.Settings
@@ -36,7 +64,11 @@ defmodule Blogit.Models.Configuration do
   ]
 
   @doc """
-  Creates a Configuration structure from a file contents.
+  Creates a list of `Blogit.Post.Configuration` struct from the
+  configuration source file contents. The list includes configuration for
+  every configured language. The first item of the list is the configuration
+  for the default language
+  (The one returned by invoking `Blogit.Settings.default_language/0`).
 
   The name and the location of the file are read from the configuration of
   `Blogit` - the configuration property `configuration_file`.
@@ -50,10 +82,12 @@ defmodule Blogit.Models.Configuration do
   * local_path - nil
   * background_image_path - nil
   * styles_path - nil
-  * language - the language of the blog. By default it is the
-    default language for Blogit or `"en"` if none is configured.
+  * social: `%{"rss" => true, "stars_for_blogit" => true}`
+  * language: <the-language-of-this-configuration> : for every language
+              returned by `Blogit.Settings.languages/0` a configuration struct
+              will be created and returned by this function.
   """
-  @spec from_file(Blogit.RepositoryProvider.provider) :: t
+  @spec from_file(Blogit.RepositoryProvider.provider) :: [t]
   def from_file(repository_provider) do
     from_path(
       repository_provider.read_file(configuration_file()), repository_provider
@@ -61,7 +95,7 @@ defmodule Blogit.Models.Configuration do
   end
 
   @doc """
-  Checks if the name of the configuration file of the blog is in a list
+  Checks if the name of the configuration file of the blog is in the given list
   containing updated file names.
 
   ## Examples
@@ -103,7 +137,11 @@ defmodule Blogit.Models.Configuration do
     [main | additional]
   end
 
-  defp from_yml(_, template), do: template
+  defp from_yml(_, template) do
+    additional = additional_languages()
+                 |> Enum.map(&(from_map(%{}, %{template | language: &1})))
+    [template | additional]
+  end
 
   defp from_map(data, template) when is_map(data) do
     %__MODULE__{

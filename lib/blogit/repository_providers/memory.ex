@@ -96,9 +96,9 @@ defmodule Blogit.RepositoryProviders.Memory do
     Agent.get_and_update(__MODULE__,
     fn (%{updates: updates, raw_posts: raw_posts} = state) ->
       updated_posts = Enum.filter(raw_posts, &(&1.path != post_path))
-      {state, %{state |
-        raw_posts: updated_posts, updates: [post_path | updates]
-      }}
+      final_updates = [Path.join(Settings.posts_folder(), post_path) | updates]
+
+      {state, %{state | raw_posts: updated_posts, updates: final_updates}}
     end)
   end
 
@@ -187,7 +187,9 @@ defmodule Blogit.RepositoryProviders.Memory do
   end
 
   defp find_by_file_name(posts, file_name) do
-    posts |> Enum.find(fn (post) -> post.path == Path.basename(file_name) end)
+    posts |> Enum.find(fn (post) ->
+      post.path == (file_name |> String.replace_leading("posts/", ""))
+    end)
   end
 
   defp file_author(file_name) do

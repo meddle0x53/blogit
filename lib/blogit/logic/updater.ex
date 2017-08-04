@@ -1,7 +1,7 @@
 defmodule Blogit.Logic.Updater do
   @moduledoc """
   Contains the function `check_updates/1` for checking for new updates using
-  a `Blogit.RepositoryProvider`.
+  a `Blogit.RepositoryProvider` module implementation.
 
   Checking for updates should be done in a specific process, so the main
   posts repository is not blocked while checking for updates.
@@ -19,18 +19,19 @@ defmodule Blogit.Logic.Updater do
 
   @doc """
   Checks for new updates of the state in the remote/local repository.
-  The state should contain a `Blogit.RepositoryProvider` structure
-  and a repository.
+  The state should contain a `Blogit.RepositoryProvider` struct.
 
-  If there are no updates in the repository, the atom :no_updates is returned.
+  If there are no updates in the repository, the atom `:no_updates` is returned.
 
   If there are updates in the repository, a tuple of two elements is returned:
+  ```
   {
     :updates,
-    %{posts: <updated-posts-as-map>, configuration: <updated-configuration>}
-  }.
+    %{posts: <updated-posts-as-map>, configurations: <updated-configuration>}
+  }
+  ```
 
-  This function is called in a supervised Task by the `Blogit.Server` process.
+  This function is called in a supervised `Task` by the `Blogit.Server` process.
   """
   @spec check_updates(Blogit.Server.t) :: check_updates_result
   def check_updates(state) do
@@ -39,6 +40,10 @@ defmodule Blogit.Logic.Updater do
       {:updates, updates} -> update(updates, state)
     end
   end
+
+  ###########
+  # Private #
+  ###########
 
   defp update(updates, state) do
     posts = updated_posts(state.posts, updates, state.repository)
@@ -80,9 +85,6 @@ defmodule Blogit.Logic.Updater do
       end)
   end
 
-  defp updated_blog_configuration(_, true, rp) do
-    Configuration.from_file(rp)
-  end
-
+  defp updated_blog_configuration(_, true, rp), do: Configuration.from_file(rp)
   defp updated_blog_configuration(current, false, _), do: current
 end

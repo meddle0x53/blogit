@@ -1,11 +1,12 @@
 defmodule Blogit.Logic.Search do
   @moduledoc """
-  Contains a function for filtering and test-searching posts.
+  Contains a function for filtering and searching posts.
 
-  Lists of Post structures can be filtered by 'author', 'category', 'tags',
-  'year' and 'month'.
+  Lists of `Blogit.Models.Post` structures can be filtered by 'author',
+  'category', 'tags', 'year' and 'month'.
 
-  The content and the title of lists of `Blogit.Models.Post`s can be searched using a query.
+  The content and the title of lists of `Blogit.Models.Post`s can be searched
+  using a query.
   """
 
   @supported_params ~w(author category tags year month q)
@@ -14,19 +15,21 @@ defmodule Blogit.Logic.Search do
   @type posts :: [Blogit.Models.Post.t]
 
   @doc """
-  Filters a list of `Blogit.Models.Post` structures using a map meta fields
-  to filter by and/or
-  search query to match to their contents and/or titles.
+  Filters a list of `Blogit.Models.Post` structs using a map of meta fields
+  to filter by and/or search query to match to their contents and/or titles.
 
-  The map parameter supports zero or more of the following keys:
-  * "author" - Used to filter Posts by their `.meta.author` field.
-  * "category" - Used to filter Posts by their `.meta.category` field.
-  * "tags" - Used to filter Posts by their `.meta.tags` field.
+  The `params` parameter supports zero or more of the following keys:
+  * "author" - Used to filter `Blogit.Models.Post` structs by their
+    `.meta.author` field.
+  * "category" - Used to filter `Blogit.Models.Post` structs by their
+    `.meta.category` field.
+  * "tags" - Used to filter `Blogit.Models.Post` structs by their `.meta.tags`
+    field.
     The value for this key should a string of comma separated tags.
-  * "year" - Used to filter Posts by their `.meta.year` field.
-  * "month" - Used to filter Posts by their `.meta.month` field.
-  * "q" - A query to filter Posts by their content or title. Support text in
-    double quotes in order to search for phrases.
+  * "year" - Used to filter `Blogit.Models.Post` by their `.meta.year` field.
+  * "month" - Used to filter `Blogit.Models.Post` by their `.meta.month` field.
+  * "q" - A query to filter `Blogit.Models.Post` structs by their content
+    or title. Support text in double quotes in order to search for phrases.
 
   If the map contains other keys, they'll be ignored.
 

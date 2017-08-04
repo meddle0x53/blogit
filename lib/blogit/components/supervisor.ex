@@ -1,6 +1,6 @@
 defmodule Blogit.Components.Supervisor do
   @moduledoc """
-  Represents a Supervisor, which supervises the Blogit.Components worker
+  Represents a `Supervisor`, which supervises the components worker
   processes.
 
   By default this Supervisor starts with no children.
@@ -14,17 +14,42 @@ defmodule Blogit.Components.Supervisor do
   not dependent on each other. They are dependent on the `Blogit.Server`
   process, so if it dies, this supervisor is restated and its child processes
   are added by the newly restarted `Blogit.Server` process.
+
+  Every type of component will have a process for every language configured
+  for `Blogit` with its unique id. For example if `Blogit` is configured to
+  support `bg` and `en`, the `Blogit.Components.Posts` module will have two
+  worker processes, one with id `posts_bg` and one with `posts_en`. Every
+  language configured has its own set of data and processes, which are isolated
+  from the data and the processes of the other languages.
   """
 
   use Supervisor
 
   @doc """
-  Starts the `Supervisor`.
+  Starts the `Blogit.Components.Supervisor` process.
 
   The strategy of the `Blogit.Components.Supervisor` is `one_for_one` and it
   starts with no children specifications. The specifications of the components
   are added to it by the `Blogit.Server` worker process once it can accept
-  messages and has the data needed by the component processes loaded.
+  messages and has the data needed by the component processes as its state.
+
+  ## Examples
+
+      iex> {:ok, pid} = Blogit.Components.Supervisor.start_link()
+      iex> is_pid(pid)
+      true
+
+      iex> {:ok, pid} = Blogit.Components.Supervisor.start_link()
+      iex> Process.alive?(pid)
+      true
+
+      iex> {:ok, pid} = Blogit.Components.Supervisor.start_link()
+      iex> Supervisor.count_children(pid)
+      %{active: 0, specs: 0, supervisors: 0, workers: 0}
+
+      iex> {:ok, pid} = Blogit.Components.Supervisor.start_link()
+      iex> elem(:sys.get_state(pid), 2) # strategy
+      :one_for_one
   """
   @spec start_link() :: Supervisor.on_start
   def start_link do

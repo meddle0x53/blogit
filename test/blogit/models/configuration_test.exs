@@ -10,7 +10,7 @@ defmodule Blogit.Models.ConfigurationTest do
   setup do: Fixtures.setup()
 
   describe ".from_file" do
-    test "returns a default configuration if file can't be found",
+    test "returns a list of default configurations if the file can't be found",
     %{repository: repository} do
       configuration = Configuration.from_file(repository.provider)
 
@@ -19,15 +19,17 @@ defmodule Blogit.Models.ConfigurationTest do
       end)
     end
 
-    test "returns a default configuration if the file is invalid YML file",
-    %{repository: repository} do
+    test "returns a list of default configurations if the file is invalid " <>
+    "YML file", %{repository: repository} do
       repository.provider.add_file("blog.yml", "<><>Junk<><>")
       configuration = Configuration.from_file(repository.provider)
 
-      assert configuration == %Configuration{title: "Memory"}
+      assert configuration == Settings.languages() |> Enum.map(fn lang ->
+        %Configuration{title: "Memory", language: lang}
+      end)
     end
 
-    test "returns a configuration from file, if it is valid YML",
+    test "returns a list of configurations from file, if it is valid YML",
     %{repository: repository} do
       yml = """
       title: Test Blog
@@ -48,7 +50,7 @@ defmodule Blogit.Models.ConfigurationTest do
     end
 
     test """
-    returns a configuration from file, if it is valid YML and uses the
+    returns a list of configurations from file, if it is valid YML and uses the
     defaults for missing properties
     """, %{repository: repository} do
       yml = ~S"""

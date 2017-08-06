@@ -14,30 +14,10 @@ defmodule Blogit.Components.PostsByDate do
   next request to it, it is re-calculated.
   """
 
-  use GenServer
+  use Blogit.Component
 
-  @base_name :post_by_name
-
-  def base_name, do: @base_name
-  def name(language), do: :"#{base_name()}_#{language}"
-
-  alias Blogit.Settings
   alias Blogit.Models.Post
   alias Blogit.Components.Posts
-
-  @doc """
-  Starts the GenServer process.
-
-  The process is started and supervised by `Blogit.Components.Supervisor` and
-  the specification of it is added by `Blogit.Server`.
-
-  The state of the process in the beginning is nil. When the state is nil and
-  `:get` message is received as a 'call', the state is computed using the
-  state of the `Blogit.Components.Posts` process.
-  """
-  def start_link(language \\ Settings.default_language()) do
-    GenServer.start_link(__MODULE__, language, name: name(language))
-  end
 
   def init(language) do
     {:ok, %{language: language, posts_by_dates: nil}}

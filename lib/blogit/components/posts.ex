@@ -28,31 +28,10 @@ defmodule Blogit.Components.Posts do
   one.
   """
 
-  use GenServer
+  use Blogit.Component
 
-  @base_name :posts
-  def base_name, do: @base_name
-  def name(language), do: :"#{base_name()}_#{language}"
-
-  alias Blogit.Settings
   alias Blogit.Models.Post.Meta
   alias Blogit.Logic.Search
-
-  @doc """
-  Starts the GenServer process.
-
-  The process is started and supervised by `Blogit.Components.Supervisor` and
-  the specification of it is added by `Blogit.Server`.
-
-  The state of the process in the beginning is nil. When the process becomes
-  ready to accept messages, it sends the `Blogit.Server` process a `:get_posts`
-  message to retrieve its state - a map with keys atoms representing the
-  unique names of the posts and values `Blogit.Models.Post` structures,
-  representing the posts.
-  """
-  def start_link(language \\ Settings.default_language()) do
-    GenServer.start_link(__MODULE__, language, name: name(language))
-  end
 
   def init(language) do
     send(self(), :init_posts)

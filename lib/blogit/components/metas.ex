@@ -25,21 +25,10 @@ defmodule Blogit.Components.Metas do
   next request to it, it is re-calculated.
   """
 
-  use GenServer
-
-  alias Blogit.Settings
-
-  @base_name :metas
-
-  def base_name, do: @base_name
-  def name(language), do: :"#{base_name()}_#{language}"
+  use Blogit.Component
 
   alias Blogit.Components.Posts
   alias Blogit.Models.Post.Meta
-
-  def start_link(language \\ Settings.default_language()) do
-    GenServer.start_link(__MODULE__, language, name: name(language))
-  end
 
   def init(language) do
     {:ok, %{language: language, metas: nil}}

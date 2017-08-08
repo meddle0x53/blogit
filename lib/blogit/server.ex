@@ -67,6 +67,29 @@ defmodule Blogit.Server do
     GenServer.start_link(__MODULE__, repository_provider, name: __MODULE__)
   end
 
+  @doc """
+  Retrives part of the state of the `Blogit.Server` process - the list of
+  `Blogit.Models.Post` structs it holds for the given `language`.
+
+  Sends a call to the `{:get_posts, language}` call handler of the process.
+  """
+  @spec get_posts(String.t) :: [Post.t]
+  def get_posts(language) do
+    GenServer.call(__MODULE__, {:get_posts, language})
+  end
+
+  @doc """
+  Retrives part of the state of the `Blogit.Server` process - the
+  `Blogit.Models.Configuration` struct it holds for the given `language`.
+
+  Sends a call to the `{:get_configuration, language}` call handler of the
+  process.
+  """
+  @spec get_configuration(String.t) :: Configuration.t
+  def get_configuration(language) do
+    GenServer.call(__MODULE__, {:get_configuration, language})
+  end
+
   #############
   # Callbacks #
   #############

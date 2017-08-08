@@ -1,28 +1,27 @@
 defmodule Blogit.Components.Configuration do
   @moduledoc """
-  A component GenServer process which can be queried from outside.
-  The Blogit.Components.Configuration process holds the configuration of the
+  A `Blogit.Component` process which can be queried from outside.
+  The `Blogit.Components.Configuration` process holds the configuration of the
   blog.
 
   This process handles one call - `:get`. When received, the configuration
-  of the blog is returned in the form of Blogit.Models.Configuration.
+  of the blog is returned in the form of `Blogit.Models.Configuration` struct.
 
-  This component is supervised by Blogit.Components.Supervisor and added to
-  it by Blogit.Server.
+  This component is supervised by `Blogit.Components.Supervisor` and added to
+  it by `Blogit.Server`.
   When the configuration gets updated, this process' state is updated
-  by the Blogit.Server process.
+  by the `Blogit.Server` process.
   """
 
   use Blogit.Component
 
-  def init(language) do
-    send(self(), :init_configuration)
+  def init({language, configuration_provider}) do
+    send(self(), {:init_configuration, configuration_provider})
     {:ok, %{language: language}}
   end
 
-  def handle_info(:init_configuration, %{language: language}) do
-    configuration =
-      GenServer.call(Blogit.Server, {:get_configuration, language})
+  def handle_info({:init_configuration, provider}, %{language: language}) do
+    configuration = provider.get_configuration(language)
 
     {:noreply, %{language: language, configuration: configuration}}
   end

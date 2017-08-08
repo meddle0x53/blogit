@@ -1,6 +1,6 @@
 defmodule Blogit.Components.PostsByDate do
   @moduledoc """
-  A component GenServer process which can be queried from outside.
+  A `Blogit.Component` process which can be queried from outside.
 
   This process handles a `:get` message which returns a list of tuples of
   three elements - `{<year>, <month>, <number-of-posts>}`. It is statistics
@@ -10,7 +10,7 @@ defmodule Blogit.Components.PostsByDate do
   it by `Blogit.Server`. It is lazy, the first time it is queried it computes
   its state by using the `Blogit.Components.Posts` process' state.
 
-  When the posts get updated, this process' state is reset to nil and on the
+  When the posts get updated, this process' state is reset to `nil` and on the
   next request to it, it is re-calculated.
   """
 
@@ -19,7 +19,7 @@ defmodule Blogit.Components.PostsByDate do
   alias Blogit.Models.Post
   alias Blogit.Components.Posts
 
-  def init(language) do
+  def init({language, _}) do
     {:ok, %{language: language, posts_by_dates: nil}}
   end
 

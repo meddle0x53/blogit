@@ -4,7 +4,7 @@ defmodule Blogit.ComponentTest do
   defmodule TestComponent do
     use Blogit.Component
 
-    def init(language), do: {:ok, %{language: language}}
+    def init({language, _}), do: {:ok, %{language: language}}
   end
 
   defmodule AnotherTestComponent do
@@ -27,7 +27,7 @@ defmodule Blogit.ComponentTest do
       assert TestComponent.name("en") == :test_component_en
     end
 
-    test "injects a function start_link/1 which starts a GenServer process " <>
+    test "injects a function start_link/2 which starts a GenServer process " <>
     "with name `name(Blogit.Settings.default_language())` if no language " <>
     "given" do
       assert Blogit.Settings.default_language() == "bg"

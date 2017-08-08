@@ -63,16 +63,31 @@ defmodule Blogit.Component do
       def name(language), do: :"#{base_name()}_#{language}"
 
       @doc """
-      Starts the GenServer process.
+      Starts the `GenServer` process.
 
       The process is started and supervised by `Blogit.Components.Supervisor`
       and the specification of it is added by `Blogit.Server`.
 
       The state of the process in the beginning is nil.
+
+      The process should keep the given `language` passed to `init/1`
+      as the first of a tuple as part of its state. This process should serve
+      requests related to that `language`.
+
+      The given `state_provider` is the second element of the tuple passed to
+      `GenServer.init/1`. It could be used to retrieve the state of
+      the process.
+
+      By default the `language` is the one returned by
+      `Blogit.Settings.default_language/0` and the `state_provider` is
+      `Blogit.Server`.
       """
       @spec name(String.t) :: GenServer.on_start
-      def start_link(language \\ Settings.default_language()) do
-        GenServer.start_link(__MODULE__, language, name: name(language))
+      def start_link(
+        language \\ Settings.default_language(), state_provider \\ Blogit.Server
+      ) do
+        args = {language, state_provider}
+        GenServer.start_link(__MODULE__, args, name: name(language))
       end
     end
   end

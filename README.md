@@ -314,4 +314,4 @@ You can find me at:
 * [Github](https://github.com/meddle0x53)
 * [Gmail](mailto:n.tzvetinov@gmail.com)
 * [elixir-lang.bg](mailto:n.tzvetinov@elixir-lang.bg)
-* [My blog, implemented using Blogit](themeddle.com)
+* [My blog, implemented using Blogit](http://themeddle.com)

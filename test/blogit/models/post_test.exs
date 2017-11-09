@@ -151,5 +151,32 @@ defmodule Blogit.Models.PostTest do
 
       assert post_names == [:mix]
     end
+
+    test "reference links are present in the preview",
+    %{repository: repository} do
+      lang = Blogit.Settings.default_language()
+      post = Post.from_file("modules_functions_recursion.md", repository, lang)
+
+      assert post.html == """
+      <p>Организацията на кода в Elixir става чрез <a href=\"http://elixir-lang.github.io/getting-started/modules-and-functions.html\" title=\"\">модули</a>.
+      Модулите просто групират множество функции,
+      като обикновенно идеята е функциите в даден модул да извършват някаква
+      обща работа.</p>
+      <p>Така и когато ние пишем програма на Elixir ще разбиваме
+      функционалността на функции и ще ги групираме в модули.</p>
+      <h2>Дефиниране на модул</h2>
+      <p>Нека да видим един прост пример за модул с една фунцкия:</p>
+      """
+
+      assert post.meta.preview == """
+      <p>Организацията на кода в Elixir става чрез <a href=\"http://elixir-lang.github.io/getting-started/modules-and-functions.html\" title=\"\">модули</a>.
+      Модулите просто групират множество функции,
+      като обикновенно идеята е функциите в даден модул да извършват някаква
+      обща работа.</p>
+      <p>Така и когато ние пишем програма на Elixir ще разбиваме
+      функционалността на функции и ще ги групираме в модули.</p>
+      <h2>Дефиниране на модул</h2>
+      """
+    end
   end
 end

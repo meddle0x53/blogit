@@ -111,6 +111,7 @@ defmodule Blogit.Models.Post.Meta do
                         |> String.split_at(index)
                         |> elem(0)
                         |> String.replace(~r/^\s*\#\s*.+/, "")
+                        |> Kernel.<>(find_all_references(raw))
                         |> Earmark.as_html()
 
     tags = Map.get(data, "tags", [])
@@ -152,5 +153,16 @@ defmodule Blogit.Models.Post.Meta do
     name
     |> String.split(~r{[^A-Za-z0-9]}) |> Enum.map(&String.capitalize/1)
     |> Enum.join(" ")
+  end
+
+  @references_regex ~r/^[ ]{0,3}(?:\[(.+?)\][ ]?:)[ ]*\n?[ ]*(?:<(.+?)>|(\S+?))[ ]*\n?[ ]*(?:(?<=\s)["(](.*?)[")][ ]*)?(?:\n+|\Z)/mi
+  defp find_all_references(raw) do
+    @references_regex
+    |> Regex.scan(raw, capture: :all)
+    |> Enum.map(fn match -> match |> List.first |> String.trim end)
+    |> Enum.uniq
+    |> Enum.reduce("", fn reference, references ->
+      references <> "\n" <> reference
+    end)
   end
 end

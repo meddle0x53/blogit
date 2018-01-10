@@ -18,7 +18,7 @@ It is [available in Hex](https://hex.pm/docs/publish), so the package can be ins
 
       ```elixir
       def deps do
-        [{:blogit, "~> 1.1.0"}]
+        [{:blogit, "~> 1.2"}]
       end
       ```
 

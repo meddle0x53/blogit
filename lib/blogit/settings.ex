@@ -35,7 +35,7 @@ defmodule Blogit.Settings do
       iex> Blogit.Settings.languages()
       ["en"]
   """
-  @spec languages() :: [String.t]
+  @spec languages() :: [String.t()]
   def languages, do: Application.get_env(:blogit, :languages, ~w(en))
 
   @doc """
@@ -59,8 +59,8 @@ defmodule Blogit.Settings do
       iex> Blogit.Settings.default_language()
       "en"
   """
-  @spec default_language() :: String.t
-  def default_language, do: languages() |> List.first
+  @spec default_language() :: String.t()
+  def default_language, do: languages() |> List.first()
 
   @doc """
   Returns a list of the additional or secondary languages configured for
@@ -84,7 +84,7 @@ defmodule Blogit.Settings do
       iex> Blogit.Settings.additional_languages()
       []
   """
-  @spec additional_languages() :: [String.t]
+  @spec additional_languages() :: [String.t()]
   def additional_languages do
     [_ | rest] = languages()
     rest
@@ -111,7 +111,7 @@ defmodule Blogit.Settings do
       iex> Blogit.Settings.configuration_file()
       "blog.yml"
   """
-  @spec configuration_file() :: String.t
+  @spec configuration_file() :: String.t()
   def configuration_file do
     Application.get_env(:blogit, :configuration_file, "blog.yml")
   end
@@ -127,7 +127,7 @@ defmodule Blogit.Settings do
       iex> Blogit.Settings.posts_folder()
       "posts"
   """
-  @spec posts_folder() :: String.t
+  @spec posts_folder() :: String.t()
   def posts_folder, do: @posts_folder
 
   @doc ~S"""
@@ -148,7 +148,7 @@ defmodule Blogit.Settings do
       iex> Blogit.Settings.meta_divider()
       "\n---\n"
   """
-  @spec meta_divider() :: String.t
+  @spec meta_divider() :: String.t()
   def meta_divider, do: @meta_divider
 
   @doc """

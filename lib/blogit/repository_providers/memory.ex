@@ -11,24 +11,31 @@ defmodule Blogit.RepositoryProviders.Memory do
   @behaviour Blogit.RepositoryProvider
 
   alias Blogit.Settings
-  alias Blogit.RepositoryProviders.Memory.RawPost
+  alias Blogit.RepositoryProviders.Memory.File
 
   @opaque t :: %__MODULE__{
-    raw_posts: [RawPost.t], updates: [String.t], files: %{String.t => term}
-  }
-  defstruct [raw_posts: [], updates: [], files: %{}]
+            stored_files: [File.t()],
+            updates: [String.t()],
+            files: %{String.t() => term}
+          }
+  defstruct stored_files: [], updates: [], files: %{}
 
-  defmodule RawPost do
+  defmodule File do
     @moduledoc false
 
     @opaque t :: %__MODULE__{
-      author: String.t, path: String.t, content: String.t,
-      updated_at: String.t, created_at: String.t
-    }
+              author: String.t(),
+              path: String.t(),
+              content: String.t(),
+              updated_at: String.t(),
+              created_at: String.t()
+            }
     defstruct [
-      :author, :path,
+      :author,
+      :path,
       content: "# Title\n Some text...\n## Section 1\n Hey!!\n* i1\n * i2",
-      updated_at: "2017-04-22 13:15:32", created_at: "2017-04-21 22:23:12"
+      updated_at: "2017-04-22 13:15:32",
+      created_at: "2017-04-21 22:23:12"
     ]
   end
 
@@ -60,64 +67,58 @@ defmodule Blogit.RepositoryProviders.Memory do
 
   Returns the state of the repository before the modification.
   """
-  @spec add_file(String.t, term) :: t
+  @spec add_file(String.t(), term) :: t
   def add_file(file_path, data) do
-    Agent.get_and_update(__MODULE__,
-    fn (%{files: files, updates: updates} = state) ->
+    Agent.get_and_update(__MODULE__, fn %{files: files, updates: updates} = state ->
       updated = Map.put(files, file_path, data)
       {state, %{state | files: updated, updates: [file_path | updates]}}
     end)
   end
 
   @doc """
-  Adds a post to the in-memory repository. Returns the state of the in-memory
+  Stores a file in the in-memory repository. Returns the state of the in-memory
   repository before the addition.
   """
-  @spec add_post(RawPost.t) :: t
-  def add_post(raw_post) do
-    Agent.get_and_update(__MODULE__,
-    fn (%{updates: updates, raw_posts: raw_posts} = state) ->
+  @spec add_file(File.t()) :: t
+  def add_file(file) do
+    Agent.get_and_update(__MODULE__, fn %{updates: updates, stored_files: stored_files} = state ->
       final_updates = [
-        Path.join(Settings.posts_folder(), raw_post.path) | updates
+        Path.join(Settings.posts_folder(), file.path) | updates
       ]
 
-      {state, %{state |
-        raw_posts: [raw_post | raw_posts], updates: final_updates
-      }}
+      {state, %{state | stored_files: [file | stored_files], updates: final_updates}}
     end)
   end
 
   @doc """
-  Deletes a post from the in-memory repository. Returns the state of the
+  Deletes a file from the in-memory repository. Returns the state of the
   repository before the modification.
   """
-  @spec delete_post(String.t) :: t
-  def delete_post(post_path) do
-    Agent.get_and_update(__MODULE__,
-    fn (%{updates: updates, raw_posts: raw_posts} = state) ->
-      updated_posts = Enum.filter(raw_posts, &(&1.path != post_path))
-      final_updates = [Path.join(Settings.posts_folder(), post_path) | updates]
+  @spec delete_file(String.t()) :: t
+  def delete_file(file_path) do
+    Agent.get_and_update(__MODULE__, fn %{updates: updates, stored_files: stored_files} = state ->
+      updated = Enum.filter(stored_files, &(&1.path != file_path))
+      final_updates = [Path.join(Settings.posts_folder(), file_path) | updates]
 
-      {state, %{state | raw_posts: updated_posts, updates: final_updates}}
+      {state, %{state | stored_files: updated, updates: final_updates}}
     end)
   end
 
   @doc """
-  Replaces an existing post from the in-memory repository with new content.
-  If the post doesn't exist, creates it. Returns the state of the repository
+  Replaces an existing file's content with new content.
+  If the file doesn't exist, creates it. Returns the state of the repository
   before the modification.
   """
-  @spec replace_post(RawPost.t) :: t
-  def replace_post(raw_post) do
-    Agent.get_and_update(__MODULE__,
-    fn (%{updates: updates, raw_posts: raw_posts} = state) ->
-      updated_posts = Enum.filter(raw_posts, &(&1.path != raw_post.path))
+  @spec replace_file(File.t()) :: t
+  def replace_file(file) do
+    Agent.get_and_update(__MODULE__, fn %{updates: updates, stored_files: stored_files} = state ->
+      updated = Enum.filter(stored_files, &(&1.path != file.path))
+
       final_updates = [
-        Path.join(Settings.posts_folder(), raw_post.path) | updates
+        Path.join(Settings.posts_folder(), file.path) | updates
       ]
-      {state, %{state |
-        raw_posts: [raw_post | updated_posts], updates: final_updates
-      }}
+
+      {state, %{state | stored_files: [file | updated], updates: final_updates}}
     end)
   end
 
@@ -128,7 +129,7 @@ defmodule Blogit.RepositoryProviders.Memory do
   def repository, do: __MODULE__
 
   def fetch(_) do
-    Agent.get_and_update(__MODULE__, fn (data) ->
+    Agent.get_and_update(__MODULE__, fn data ->
       case Enum.empty?(data.updates) do
         true -> {{:no_updates}, data}
         false -> {{:updates, data.updates}, %{data | updates: []}}
@@ -139,14 +140,14 @@ defmodule Blogit.RepositoryProviders.Memory do
   def local_path, do: "memory"
 
   def list_files(_ \\ "") do
-    Agent.get(__MODULE__, fn (%{raw_posts: posts}) ->
-      posts |> Enum.map(fn (post) -> post.path end)
+    Agent.get(__MODULE__, fn %{stored_files: files} ->
+      files |> Enum.map(fn file -> file.path end)
     end)
   end
 
   def file_in?(file) do
-    Agent.get(__MODULE__, fn (%{raw_posts: posts}) ->
-      posts |> find_by_file_name(file)
+    Agent.get(__MODULE__, fn %{stored_files: files} ->
+      files |> find_by_file_name(file)
     end)
   end
 
@@ -160,12 +161,13 @@ defmodule Blogit.RepositoryProviders.Memory do
 
   def read_file(file_name, folder \\ "") do
     if folder == Settings.posts_folder() do
-      case get_post_property_value_by_file_name(:content, file_name) do
+      case get_file_property_value_by_file_name(:content, file_name) do
         nil -> {:error, :file_not_found}
         data -> {:ok, data}
       end
     else
-      files = Agent.get(__MODULE__, fn (%{files: files}) -> files end)
+      files = Agent.get(__MODULE__, fn %{files: files} -> files end)
+
       case files[file_name] do
         nil -> {:error, :file_not_found}
         data -> {:ok, data}
@@ -177,30 +179,33 @@ defmodule Blogit.RepositoryProviders.Memory do
   # Private #
   ###########
 
-  defp get_post_property_value_by_file_name(property, file_name) do
-    Agent.get(__MODULE__, fn (%{raw_posts: posts}) ->
-      case posts |> find_by_file_name(file_name) do
+  defp get_file_property_value_by_file_name(property, file_name) do
+    Agent.get(__MODULE__, fn %{stored_files: files} ->
+      case files |> find_by_file_name(file_name) do
         nil -> nil
-        post -> Map.get(post, property)
+        file -> Map.get(file, property)
       end
     end)
   end
 
-  defp find_by_file_name(posts, file_name) do
-    posts |> Enum.find(fn (post) ->
-      post.path == (file_name |> String.replace_leading("posts/", ""))
+  defp find_by_file_name(files, file_name) do
+    root = "#{Settings.posts_folder()}/"
+
+    files
+    |> Enum.find(fn file ->
+      file.path == file_name |> String.replace_leading(root, "")
     end)
   end
 
   defp file_author(file_name) do
-    get_post_property_value_by_file_name(:author, file_name)
+    get_file_property_value_by_file_name(:author, file_name)
   end
 
   defp file_created_at(file_name) do
-    get_post_property_value_by_file_name(:created_at, file_name)
+    get_file_property_value_by_file_name(:created_at, file_name)
   end
 
   defp file_updated_at(file_name) do
-    get_post_property_value_by_file_name(:updated_at, file_name)
+    get_file_property_value_by_file_name(:updated_at, file_name)
   end
 end

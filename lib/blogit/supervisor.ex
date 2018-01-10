@@ -33,7 +33,7 @@ defmodule Blogit.Supervisor do
 
   This function is called by `Blogit.start/2` and its result is returned by it.
   """
-  @spec start_link(module) :: Supervisor.on_start
+  @spec start_link(module) :: Supervisor.on_start()
   def start_link(repository_provider) do
     Supervisor.start_link(__MODULE__, repository_provider, name: __MODULE__)
   end
@@ -49,6 +49,7 @@ defmodule Blogit.Supervisor do
       case repository_provider do
         Blogit.RepositoryProviders.Memory ->
           [worker(repository_provider, []) | children]
+
         _ ->
           children
       end

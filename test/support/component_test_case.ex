@@ -15,8 +15,7 @@ defmodule ComponentTestCase do
         assert Process.alive?(pid)
 
         module = unquote(module_name)
-        expected_name =
-          String.to_atom("#{module.base_name()}_#{Settings.default_language()}")
+        expected_name = String.to_atom("#{module.base_name()}_#{Settings.default_language()}")
         assert module.name(Settings.default_language()) == expected_name
       end
     end

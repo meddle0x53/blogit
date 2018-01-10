@@ -49,12 +49,20 @@ defmodule Blogit.Components.Posts do
   end
 
   def handle_call(
-    {:filter, filters, from, size}, _from, %{posts: posts} = state
-  ) do
+        {:filter, filters, from, size},
+        _from,
+        %{posts: posts} = state
+      ) do
     take = if size == :infinity, do: map_size(posts), else: size
-    result = posts |> Map.values() |> Search.filter_by_params(filters)
-             |> Enum.map(&(&1.meta)) |> Meta.sorted()
-             |> Enum.drop(from) |> Enum.take(take)
+
+    result =
+      posts
+      |> Map.values()
+      |> Search.filter_by_params(filters)
+      |> Enum.map(& &1.meta)
+      |> Meta.sorted()
+      |> Enum.drop(from)
+      |> Enum.take(take)
 
     {:reply, result, state}
   end

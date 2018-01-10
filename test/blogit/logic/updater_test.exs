@@ -17,23 +17,26 @@ defmodule Blogit.Logic.UpdaterTest do
     setup %{repository: repository} do
       posts = Post.compile_posts(repository.provider.list_files, repository)
       configurations = Configuration.from_file(repository.provider)
+
       %{
         state: %Blogit.Server{
-          repository: repository, posts: posts, configurations: configurations
+          repository: repository,
+          posts: posts,
+          configurations: configurations
         }
       }
     end
 
-    test "if no updates present in the repository, returns :no_updates",
-    %{state: state} do
+    test "if no updates present in the repository, returns :no_updates", %{state: state} do
       assert Updater.check_updates(state) == :no_updates
     end
 
     test """
-    if there are new posts they are added to the posts of the given `state`
-    and returned as part of the tupple `{:updates, <new-state>}`
-    """, %{state: state} do
-      Memory.add_post(%Memory.RawPost{author: "valo", path: "meta_one.md"})
+         if there are new posts they are added to the posts of the given `state`
+         and returned as part of the tupple `{:updates, <new-state>}`
+         """,
+         %{state: state} do
+      Memory.add_file(%Memory.File{author: "valo", path: "meta_one.md"})
       {:updates, %{posts: posts}} = Updater.check_updates(state)
       names = Map.keys(posts[Blogit.Settings.default_language()])
 
@@ -41,10 +44,11 @@ defmodule Blogit.Logic.UpdaterTest do
     end
 
     test """
-    if there are new posts they are added to the posts of the given `state`
-    and returned as part of the tupple `{:updates, <new-state>}`; alt locale
-    """, %{state: state} do
-      Memory.add_post(%Memory.RawPost{author: "valo", path: "en/meta_one.md"})
+         if there are new posts they are added to the posts of the given `state`
+         and returned as part of the tupple `{:updates, <new-state>}`; alt locale
+         """,
+         %{state: state} do
+      Memory.add_file(%Memory.File{author: "valo", path: "en/meta_one.md"})
       {:updates, %{posts: posts}} = Updater.check_updates(state)
       post = posts["en"][:meta_one]
 
@@ -53,12 +57,13 @@ defmodule Blogit.Logic.UpdaterTest do
     end
 
     test """
-    if there are new posts they are added to the posts of the given `state`
-    and returned as part of the tupple `{:updates, <new-state>}`; multiple
-    """, %{state: state} do
-      Memory.add_post(%Memory.RawPost{author: "valo", path: "meta_one.md"})
-      Memory.add_post(%Memory.RawPost{author: "valo", path: "en/meta_one.md"})
-      Memory.add_post(%Memory.RawPost{author: "valo", path: "meta_two.md"})
+         if there are new posts they are added to the posts of the given `state`
+         and returned as part of the tupple `{:updates, <new-state>}`; multiple
+         """,
+         %{state: state} do
+      Memory.add_file(%Memory.File{author: "valo", path: "meta_one.md"})
+      Memory.add_file(%Memory.File{author: "valo", path: "en/meta_one.md"})
+      Memory.add_file(%Memory.File{author: "valo", path: "meta_two.md"})
       {:updates, %{posts: posts}} = Updater.check_updates(state)
       names = Map.keys(posts[Blogit.Settings.default_language()])
 
@@ -71,8 +76,9 @@ defmodule Blogit.Logic.UpdaterTest do
     end
 
     test "if a post was deleted it is removed from the the state returned " <>
-    "as part of the tuple `{:updated, <new-state>}`" , %{state: state} do
-      Memory.delete_post("mix.md")
+           "as part of the tuple `{:updated, <new-state>}`",
+         %{state: state} do
+      Memory.delete_file("mix.md")
       {:updates, %{posts: posts}} = Updater.check_updates(state)
       names = Map.keys(posts[Blogit.Settings.default_language()])
 
@@ -80,9 +86,9 @@ defmodule Blogit.Logic.UpdaterTest do
     end
 
     test "if a post was deleted it is removed from the the state returned " <>
-    "as part of the tuple `{:updated, <new-state>}`; alt locale" ,
-    %{state: state} do
-      Memory.delete_post("en/mix.md")
+           "as part of the tuple `{:updated, <new-state>}`; alt locale",
+         %{state: state} do
+      Memory.delete_file("en/mix.md")
       {:updates, %{posts: posts}} = Updater.check_updates(state)
       names = Map.keys(posts["en"])
 
@@ -90,10 +96,10 @@ defmodule Blogit.Logic.UpdaterTest do
     end
 
     test "if a post was deleted it is removed from the the state returned " <>
-    "as part of the tuple `{:updated, <new-state>}`; multiple" ,
-    %{state: state} do
-      Memory.delete_post("en/mix.md")
-      Memory.delete_post("nodes.md")
+           "as part of the tuple `{:updated, <new-state>}`; multiple",
+         %{state: state} do
+      Memory.delete_file("en/mix.md")
+      Memory.delete_file("nodes.md")
       {:updates, %{posts: posts}} = Updater.check_updates(state)
 
       names = Map.keys(posts["en"])
@@ -104,37 +110,44 @@ defmodule Blogit.Logic.UpdaterTest do
     end
 
     test "if a post was updated its state becomes the new-state returned " <>
-    "as part of the tuple {:updated, <new-state>}", %{state: state} do
-      updated_post = %Memory.RawPost{
-        author: "Reductions", path: "mix.md", content: "Updated!"
+           "as part of the tuple {:updated, <new-state>}",
+         %{state: state} do
+      updated_post = %Memory.File{
+        author: "Reductions",
+        path: "mix.md",
+        content: "Updated!"
       }
-      Memory.replace_post(updated_post)
+
+      Memory.replace_file(updated_post)
 
       {:updates, %{posts: posts}} = Updater.check_updates(state)
       posts = Map.values(posts[Blogit.Settings.default_language()])
-      contents = Enum.map(posts, &(&1.raw))
+      contents = Enum.map(posts, & &1.raw)
 
       assert Enum.member?(contents, "Updated!")
     end
 
     test "if a post was updated its state becomes the new-state returned " <>
-    "as part of the tuple {:updated, <new-state>}; alt locale",
-    %{state: state} do
-      updated_post = %Memory.RawPost{
-        author: "Reductions", path: "en/mix.md", content: "Updated!"
+           "as part of the tuple {:updated, <new-state>}; alt locale",
+         %{state: state} do
+      updated_post = %Memory.File{
+        author: "Reductions",
+        path: "en/mix.md",
+        content: "Updated!"
       }
-      Memory.replace_post(updated_post)
+
+      Memory.replace_file(updated_post)
 
       {:updates, %{posts: posts}} = Updater.check_updates(state)
       posts = Map.values(posts["en"])
-      contents = Enum.map(posts, &(&1.raw))
+      contents = Enum.map(posts, & &1.raw)
 
       assert Enum.member?(contents, "Updated!")
     end
 
     test "if the configuration of the blog was updated it is returned " <>
-    "as part of the state in the tupple {:updated, <new-state>}",
-    %{state: state} do
+           "as part of the state in the tupple {:updated, <new-state>}",
+         %{state: state} do
       yml = """
       title: Test Blog
       sub_title: Testing it now
@@ -142,21 +155,23 @@ defmodule Blogit.Logic.UpdaterTest do
       styles_path: some/styles.css
       background_image_path: some/other_image.jpg
       """
+
       Memory.add_file("blog.yml", yml)
-      {:updates, %{configurations: configurations}} =
-        Updater.check_updates(state)
+      {:updates, %{configurations: configurations}} = Updater.check_updates(state)
 
       assert List.first(configurations) == %Configuration{
-        title: "Test Blog", sub_title: "Testing it now",
-        logo_path: "some/image.jpg", styles_path: "some/styles.css",
-        background_image_path: "some/other_image.jpg",
-        language: ~s(bg)
-      }
+               title: "Test Blog",
+               sub_title: "Testing it now",
+               logo_path: "some/image.jpg",
+               styles_path: "some/styles.css",
+               background_image_path: "some/other_image.jpg",
+               language: ~s(bg)
+             }
     end
 
     test "if the configuration of the blog was updated it is returned " <>
-    "as part of the state in the tupple {:updated, <new-state>}; alt locale",
-    %{state: state} do
+           "as part of the state in the tupple {:updated, <new-state>}; alt locale",
+         %{state: state} do
       yml = """
       title: Test blog
       sub_title: SOS
@@ -166,22 +181,28 @@ defmodule Blogit.Logic.UpdaterTest do
       en:
         title: WOW
       """
-      Memory.add_file("blog.yml", yml)
-      {:updates, %{configurations: configurations}} =
-        Updater.check_updates(state)
 
-        assert configurations == [
-          %Configuration{
-            title: "Test blog", sub_title: "SOS", language: ~s(bg),
-            logo_path: "some/image.jpg", styles_path: "some/styles.css",
-            background_image_path: "some/other_image.jpg"
-          },
-          %Configuration{
-            title: "WOW", sub_title: "SOS", language: ~s(en),
-            logo_path: "some/image.jpg", styles_path: "some/styles.css",
-            background_image_path: "some/other_image.jpg"
-          }
-        ]
+      Memory.add_file("blog.yml", yml)
+      {:updates, %{configurations: configurations}} = Updater.check_updates(state)
+
+      assert configurations == [
+               %Configuration{
+                 title: "Test blog",
+                 sub_title: "SOS",
+                 language: ~s(bg),
+                 logo_path: "some/image.jpg",
+                 styles_path: "some/styles.css",
+                 background_image_path: "some/other_image.jpg"
+               },
+               %Configuration{
+                 title: "WOW",
+                 sub_title: "SOS",
+                 language: ~s(en),
+                 logo_path: "some/image.jpg",
+                 styles_path: "some/styles.css",
+                 background_image_path: "some/other_image.jpg"
+               }
+             ]
     end
   end
 end

@@ -24,15 +24,16 @@ defmodule Blogit.Component do
   @doc false
   defmacro __using__(options \\ []) do
     quote do
-      default_base_name = __MODULE__
-                          |> to_string()
-                          |> String.split(".")
-                          |> List.last()
-                          |> Macro.underscore()
-      base_name_string =
-        Keyword.get(unquote(options), :base_name, default_base_name)
+      default_base_name =
+        __MODULE__
+        |> to_string()
+        |> String.split(".")
+        |> List.last()
+        |> Macro.underscore()
 
-      # Code used by every componen process module:
+      base_name_string = Keyword.get(unquote(options), :base_name, default_base_name)
+
+      # Code used by every component process module:
 
       use GenServer
 
@@ -44,7 +45,7 @@ defmodule Blogit.Component do
       Returns the base name, which identifies the process. For example it
       could be `posts`.
       """
-      @spec base_name() :: String.t
+      @spec base_name() :: String.t()
       def base_name, do: @base_name
 
       @doc """
@@ -59,7 +60,7 @@ defmodule Blogit.Component do
       (or the one returned from `Blogit.Settings.default_language/0`) will be
       passed to `name/1` to create the name.
       """
-      @spec name(String.t) :: atom
+      @spec name(String.t()) :: atom
       def name(language), do: :"#{base_name()}_#{language}"
 
       @doc """
@@ -82,10 +83,11 @@ defmodule Blogit.Component do
       `Blogit.Settings.default_language/0` and the `state_provider` is
       `Blogit.Server`.
       """
-      @spec name(String.t) :: GenServer.on_start
+      @spec name(String.t()) :: GenServer.on_start()
       def start_link(
-        language \\ Settings.default_language(), state_provider \\ Blogit.Server
-      ) do
+            language \\ Settings.default_language(),
+            state_provider \\ Blogit.Server
+          ) do
         args = {language, state_provider}
         GenServer.start_link(__MODULE__, args, name: name(language))
       end

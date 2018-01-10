@@ -29,8 +29,11 @@ defmodule Blogit.Models.Post do
   import Blogit.Settings
 
   @type t :: %__MODULE__{
-    name: String.t, raw: String.t, html: String.t, meta: Meta.t
-  }
+          name: String.t(),
+          raw: String.t(),
+          html: String.t(),
+          meta: Meta.t()
+        }
   @enforce_keys [:name, :raw, :html, :meta]
   defstruct [:name, :raw, :html, :meta]
 
@@ -55,11 +58,14 @@ defmodule Blogit.Models.Post do
   `post.html` won't be generated and will be `nil`.
   """
   @type from_file_result :: t | :source_file_not_found
-  @spec from_file(String.t, Repository.t, String.t) :: from_file_result
+  @spec from_file(String.t(), Repository.t(), String.t()) :: from_file_result
   def from_file(file_path, repository, language) do
     name = name_from_file(file_path, language)
+
     case repository.provider.read_file(file_path, posts_folder()) do
-      {:error, _} -> :source_file_not_found
+      {:error, _} ->
+        :source_file_not_found
+
       {:ok, raw} ->
         data =
           if String.contains?(raw, meta_divider()) do
@@ -73,9 +79,7 @@ defmodule Blogit.Models.Post do
         meta = Meta.from_file(file_path, repository, data, name, language)
 
         if meta.published do
-          html = Earmark.as_html!(
-                   String.replace(List.last(data), ~r/^\s*\#\s*.+/, "")
-                 )
+          html = Earmark.as_html!(String.replace(List.last(data), ~r/^\s*\#\s*.+/, ""))
           %__MODULE__{name: name, raw: raw, html: html, meta: meta}
         else
           %__MODULE__{name: name, raw: raw, html: nil, meta: meta}
@@ -97,27 +101,31 @@ defmodule Blogit.Models.Post do
   Skips all the non-markdown files as well as the ones that mark the post
   content as not published or does not exist in the given `repository`.
   """
-  @spec compile_posts([String.t], Repository.t) :: %{String.t => %{atom => t}}
+  @spec compile_posts([String.t()], Repository.t()) :: %{String.t() => %{atom => t}}
   def compile_posts(list, repository) when is_list(list) do
-    file_paths = list
-    |> Enum.filter(fn(f) -> String.ends_with?(f, ".md") end)
-    |> Enum.map(&Path.split/1)
+    file_paths =
+      list
+      |> Enum.filter(fn f -> String.ends_with?(f, ".md") end)
+      |> Enum.map(&Path.split/1)
 
     primary_language = default_language()
-    languages() |> Enum.reduce(%{}, fn language, current ->
-      paths = file_paths
-      |> Enum.filter(fn path ->
-        [prefix | _] = path
 
-        prefix == language ||
-          (language == primary_language && !Enum.member?(languages(), prefix))
-      end)
-      |> Enum.map(&Path.join/1)
-      |> Enum.map(fn(file) -> from_file(file, repository, language) end)
-      |> Enum.reject(&(&1 == :source_file_not_found || is_nil(&1.raw)))
-      |> Enum.filter(&(&1.meta.published))
-      |> Enum.map(fn(post) -> {String.to_atom(post.name), post} end)
-      |> Enum.into(%{})
+    languages()
+    |> Enum.reduce(%{}, fn language, current ->
+      paths =
+        file_paths
+        |> Enum.filter(fn path ->
+          [prefix | _] = path
+
+          prefix == language ||
+            (language == primary_language && !Enum.member?(languages(), prefix))
+        end)
+        |> Enum.map(&Path.join/1)
+        |> Enum.map(fn file -> from_file(file, repository, language) end)
+        |> Enum.reject(&(&1 == :source_file_not_found || is_nil(&1.raw)))
+        |> Enum.filter(& &1.meta.published)
+        |> Enum.map(fn post -> {String.to_atom(post.name), post} end)
+        |> Enum.into(%{})
 
       Map.put(current, language, paths)
     end)
@@ -137,10 +145,10 @@ defmodule Blogit.Models.Post do
       ...> |> Enum.map(&(elem(&1, 1)))
       [:one_two_name]
   """
-  @spec names_from_files([String.t]) :: [String.t]
+  @spec names_from_files([String.t()]) :: [String.t()]
   def names_from_files(files) do
     files
-    |> Enum.filter(fn(f) -> String.ends_with?(f, ".md") end)
+    |> Enum.filter(fn f -> String.ends_with?(f, ".md") end)
     |> Enum.map(fn path ->
       [prefix | _] = Path.split(path)
 
@@ -196,16 +204,18 @@ defmodule Blogit.Models.Post do
 
       month_map = Map.get(map, year, %{})
       month_count = Map.get(month_map, month, 0)
-      month_map = Map.merge(month_map, %{month => (month_count + 1)})
+      month_map = Map.merge(month_map, %{month => month_count + 1})
 
       Map.merge(map, %{year => month_map})
-    end) |> Map.to_list
+    end)
+    |> Map.to_list()
     |> Enum.flat_map(fn {year, dates} ->
       dates
       |> Map.to_list()
       |> Enum.map(fn {month, count} -> {year, month, count} end)
-    end) |> Enum.sort(fn({year1, month1, _}, {year2, month2, _}) ->
-      case (year1 == year2) do
+    end)
+    |> Enum.sort(fn {year1, month1, _}, {year2, month2, _} ->
+      case year1 == year2 do
         true -> month2 <= month1
         false -> year2 <= year1
       end
@@ -218,10 +228,10 @@ defmodule Blogit.Models.Post do
 
   defp name_from_file(file_name, language) do
     file_name
-    |> Path.split
+    |> Path.split()
     |> Enum.filter(&(&1 != language))
     |> Enum.join("_")
-    |> String.downcase
+    |> String.downcase()
     |> String.trim_trailing(".md")
   end
 end

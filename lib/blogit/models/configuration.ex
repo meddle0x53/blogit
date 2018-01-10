@@ -50,15 +50,23 @@ defmodule Blogit.Models.Configuration do
 
   import Blogit.Settings
 
-  @type string_or_nil :: String.t | nil
+  @type string_or_nil :: String.t() | nil
   @type t :: %__MODULE__{
-    title: String.t, sub_title: string_or_nil, logo_path: string_or_nil,
-    background_image_path: string_or_nil, styles_path: string_or_nil,
-    language: String.t, social: %{String.t => String.t | boolean}
-  }
+          title: String.t(),
+          sub_title: string_or_nil,
+          logo_path: string_or_nil,
+          background_image_path: string_or_nil,
+          styles_path: string_or_nil,
+          language: String.t(),
+          social: %{String.t() => String.t() | boolean}
+        }
   @enforce_keys [:title]
   defstruct [
-    :title, :logo_path, :sub_title, :background_image_path, :styles_path,
+    :title,
+    :logo_path,
+    :sub_title,
+    :background_image_path,
+    :styles_path,
     language: default_language(),
     social: %{"rss" => true, "stars_for_blogit" => true}
   ]
@@ -87,10 +95,11 @@ defmodule Blogit.Models.Configuration do
               returned by `Blogit.Settings.languages/0` a configuration struct
               will be created and returned by this function.
   """
-  @spec from_file(Blogit.RepositoryProvider.provider) :: [t]
+  @spec from_file(Blogit.RepositoryProvider.provider()) :: [t]
   def from_file(repository_provider) do
     from_path(
-      repository_provider.read_file(configuration_file()), repository_provider
+      repository_provider.read_file(configuration_file()),
+      repository_provider
     )
   end
 
@@ -106,7 +115,7 @@ defmodule Blogit.Models.Configuration do
       iex> Blogit.Models.Configuration.updated?(~w(one.md blog.yml))
       true
   """
-  @spec updated?([String.t]) :: boolean
+  @spec updated?([String.t()]) :: boolean
   def updated?(updates) do
     Enum.member?(updates, configuration_file())
   end
@@ -121,6 +130,7 @@ defmodule Blogit.Models.Configuration do
 
   defp from_path({:ok, data}, repository_provider) do
     defaults = from_defaults(repository_provider)
+
     try do
       from_yml(YamlElixir.read_from_string(data), defaults)
     rescue
@@ -131,15 +141,17 @@ defmodule Blogit.Models.Configuration do
   defp from_yml(data, template) when is_map(data) do
     main = from_map(data, template)
 
-    additional = additional_languages() |> Enum.map(
-                   &(from_map(data[&1] || %{}, %{main | language: &1}))
-                 )
+    additional =
+      additional_languages() |> Enum.map(&from_map(data[&1] || %{}, %{main | language: &1}))
+
     [main | additional]
   end
 
   defp from_yml(_, template) do
-    additional = additional_languages()
-                 |> Enum.map(&(from_map(%{}, %{template | language: &1})))
+    additional =
+      additional_languages()
+      |> Enum.map(&from_map(%{}, %{template | language: &1}))
+
     [template | additional]
   end
 
@@ -148,8 +160,7 @@ defmodule Blogit.Models.Configuration do
       title: data["title"] || template.title,
       logo_path: data["logo_path"] || template.logo_path,
       sub_title: data["sub_title"] || template.sub_title,
-      background_image_path:
-        data["background_image_path"] || template.background_image_path,
+      background_image_path: data["background_image_path"] || template.background_image_path,
       styles_path: data["styles_path"] || template.styles_path,
       language: data["language"] || template.language,
       social: data["social"] || template.social
@@ -158,8 +169,11 @@ defmodule Blogit.Models.Configuration do
 
   defp from_defaults(repository_provider) do
     %__MODULE__{
-      title: default_title(repository_provider), logo_path: nil, sub_title: nil,
-      background_image_path: nil, styles_path: nil,
+      title: default_title(repository_provider),
+      logo_path: nil,
+      sub_title: nil,
+      background_image_path: nil,
+      styles_path: nil,
       language: default_language(),
       social: %{"rss" => true, "stars_for_blogit" => true}
     }
@@ -167,14 +181,15 @@ defmodule Blogit.Models.Configuration do
 
   defp default_title(repository_provider) do
     repository_provider.local_path
-    |> Path.basename
+    |> Path.basename()
     |> String.split(~r{[^A-Za-z0-9]})
     |> Enum.map(&String.capitalize/1)
     |> Enum.join(" ")
   end
 
   defp default_result(defaults) do
-    languages() |> Enum.map(fn language ->
+    languages()
+    |> Enum.map(fn language ->
       Map.put(defaults, :language, language)
     end)
   end

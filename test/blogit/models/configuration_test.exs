@@ -10,27 +10,34 @@ defmodule Blogit.Models.ConfigurationTest do
   setup do: Fixtures.setup()
 
   describe ".from_file" do
-    test "returns a list of default configurations if the file can't be found",
-    %{repository: repository} do
+    test "returns a list of default configurations if the file can't be found", %{
+      repository: repository
+    } do
       configuration = Configuration.from_file(repository.provider)
 
-      assert configuration == Settings.languages() |> Enum.map(fn lang ->
-        %Configuration{title: "Memory", language: lang}
-      end)
+      assert configuration ==
+               Settings.languages()
+               |> Enum.map(fn lang ->
+                 %Configuration{title: "Memory", language: lang}
+               end)
     end
 
-    test "returns a list of default configurations if the file is invalid " <>
-    "YML file", %{repository: repository} do
+    test "returns a list of default configurations if the file is invalid " <> "YML file", %{
+      repository: repository
+    } do
       repository.provider.add_file("blog.yml", "<><>Junk<><>")
       configuration = Configuration.from_file(repository.provider)
 
-      assert configuration == Settings.languages() |> Enum.map(fn lang ->
-        %Configuration{title: "Memory", language: lang}
-      end)
+      assert configuration ==
+               Settings.languages()
+               |> Enum.map(fn lang ->
+                 %Configuration{title: "Memory", language: lang}
+               end)
     end
 
-    test "returns a list of configurations from file, if it is valid YML",
-    %{repository: repository} do
+    test "returns a list of configurations from file, if it is valid YML", %{
+      repository: repository
+    } do
       yml = """
       title: Test Blog
       sub_title: Testing it now
@@ -38,37 +45,47 @@ defmodule Blogit.Models.ConfigurationTest do
       styles_path: some/styles.css
       background_image_path: some/other_image.jpg
       """
+
       repository.provider.add_file("blog.yml", yml)
 
       configuration = Configuration.from_file(repository.provider)
+
       assert List.first(configuration) == %Configuration{
-        title: "Test Blog", sub_title: "Testing it now",
-        logo_path: "some/image.jpg", styles_path: "some/styles.css",
-        background_image_path: "some/other_image.jpg",
-        language: ~s[bg]
-      }
+               title: "Test Blog",
+               sub_title: "Testing it now",
+               logo_path: "some/image.jpg",
+               styles_path: "some/styles.css",
+               background_image_path: "some/other_image.jpg",
+               language: ~s[bg]
+             }
     end
 
     test """
-    returns a list of configurations from file, if it is valid YML and uses the
-    defaults for missing properties
-    """, %{repository: repository} do
+         returns a list of configurations from file, if it is valid YML and uses the
+         defaults for missing properties
+         """,
+         %{repository: repository} do
       yml = ~S"""
       sub_title: "Testing it now"
       logo_path: some/image.jpg
       styles_path: some/styles.css
       """
+
       repository.provider.add_file("blog.yml", yml)
 
       configuration = Configuration.from_file(repository.provider)
+
       assert List.first(configuration) == %Configuration{
-        title: "Memory", sub_title: "Testing it now",
-        logo_path: "some/image.jpg", styles_path: "some/styles.css",
-      }
+               title: "Memory",
+               sub_title: "Testing it now",
+               logo_path: "some/image.jpg",
+               styles_path: "some/styles.css"
+             }
     end
 
     test "creates configurations for every supported language if " <>
-    "there are multiple languages", %{repository: repository} do
+           "there are multiple languages",
+         %{repository: repository} do
       current_languages = Settings.languages()
       Application.put_env(:blogit, :languages, ~w(en bg de))
 
@@ -90,22 +107,32 @@ defmodule Blogit.Models.ConfigurationTest do
       repository.provider.add_file("blog.yml", yml)
 
       configuration = Configuration.from_file(repository.provider)
+
       en = %Configuration{
-        title: "Test blog", sub_title: "Testing it with languages",
-        logo_path: "some/image.jpg", styles_path: "some/styles.css",
-        background_image_path: "some/other_image.jpg", language: "en"
+        title: "Test blog",
+        sub_title: "Testing it with languages",
+        logo_path: "some/image.jpg",
+        styles_path: "some/styles.css",
+        background_image_path: "some/other_image.jpg",
+        language: "en"
       }
 
       bg = %Configuration{
-        title: "Тестов блог", sub_title: "С езици",
-        logo_path: "some/bg_image.jpg", styles_path: "some/styles.css",
-        background_image_path: "some/other_image.jpg", language: "bg"
+        title: "Тестов блог",
+        sub_title: "С езици",
+        logo_path: "some/bg_image.jpg",
+        styles_path: "some/styles.css",
+        background_image_path: "some/other_image.jpg",
+        language: "bg"
       }
 
       de = %Configuration{
-        title: "Das ist mein blog", sub_title: "Ich spreche Deuch",
-        logo_path: "some/image.jpg", styles_path: "some/styles.css",
-        background_image_path: "some/other_image.jpg", language: "de"
+        title: "Das ist mein blog",
+        sub_title: "Ich spreche Deuch",
+        logo_path: "some/image.jpg",
+        styles_path: "some/styles.css",
+        background_image_path: "some/other_image.jpg",
+        language: "de"
       }
 
       assert configuration == [en, bg, de]

@@ -31,16 +31,17 @@ defmodule Blogit.Server do
   alias Blogit.Models.Post
   alias Blogit.Models.Configuration
 
-  alias Blogit.Components.{Posts, Metas, PostsByDate}
+  alias Blogit.Components.{Posts, PostsByDate}
   alias Blogit.Components.Supervisor, as: ComponentsSupervisor
 
   alias Blogit.RepositoryProvider, as: Repository
 
   @enforce_keys [:repository, :posts, :configurations]
   @type t :: %__MODULE__{
-    repository: Repository.t, posts: %{atom => Post.t},
-    configurations: [Configuration.t]
-  }
+          repository: Repository.t(),
+          posts: %{atom => Post.t()},
+          configurations: [Configuration.t()]
+        }
   defstruct [:repository, :posts, :configurations]
 
   #######
@@ -62,7 +63,7 @@ defmodule Blogit.Server do
   `Blogit.Server` process. When there are updates, the blogit server will
   update its components.
   """
-  @spec start_link(module) :: GenServer.on_start
+  @spec start_link(module) :: GenServer.on_start()
   def start_link(repository_provider) do
     GenServer.start_link(__MODULE__, repository_provider, name: __MODULE__)
   end
@@ -73,7 +74,7 @@ defmodule Blogit.Server do
 
   Sends a call to the `{:get_posts, language}` call handler of the process.
   """
-  @spec get_posts(String.t) :: [Post.t]
+  @spec get_posts(String.t()) :: [Post.t()]
   def get_posts(language) do
     GenServer.call(__MODULE__, {:get_posts, language})
   end
@@ -85,7 +86,7 @@ defmodule Blogit.Server do
   Sends a call to the `{:get_configuration, language}` call handler of the
   process.
   """
-  @spec get_configuration(String.t) :: Configuration.t
+  @spec get_configuration(String.t()) :: Configuration.t()
   def get_configuration(language) do
     GenServer.call(__MODULE__, {:get_configuration, language})
   end
@@ -111,24 +112,26 @@ defmodule Blogit.Server do
   end
 
   def handle_info(:check_updates, state) do
-    Task.Supervisor.async_nolink(
-      :tasks_supervisor, Blogit.Logic.Updater, :check_updates, [state]
-    )
+    Task.Supervisor.async_nolink(:tasks_supervisor, Blogit.Logic.Updater, :check_updates, [state])
     {:noreply, state}
   end
 
   def handle_info({_, :no_updates}, state), do: {:noreply, state}
 
   def handle_info(
-    {_, {:updates, %{posts: posts, configurations: configurations}}}, state
-  ) do
-    configurations |> Enum.each(fn configuration ->
+        {_, {:updates, %{posts: posts, configurations: configurations}}},
+        state
+      ) do
+    configurations
+    |> Enum.each(fn configuration ->
       name = Blogit.Components.Configuration.name(configuration.language)
       GenServer.cast(name, {:update, configuration})
+
       GenServer.cast(
         Posts.name(configuration.language),
         {:update, posts[configuration.language]}
       )
+
       GenServer.cast(PostsByDate.name(configuration.language), :reset)
     end)
 
@@ -141,16 +144,21 @@ defmodule Blogit.Server do
   end
 
   def handle_call(
-    {:get_configuration, language}, {pid, _}, %{configurations: conf} = st
-  ) do
+        {:get_configuration, language},
+        {pid, _},
+        %{configurations: conf} = st
+      ) do
     configuration = conf |> Enum.find(&(&1.language == language))
-    names = conf
-            |> Enum.map(&(Blogit.Components.Configuration.name(&1.language)))
+
+    names =
+      conf
+      |> Enum.map(&Blogit.Components.Configuration.name(&1.language))
+
     ensure_caller(pid, names, configuration, st)
   end
 
   def handle_call({:get_posts, language}, {pid, _}, %{posts: posts} = state) do
-    names = Settings.languages() |> Enum.map(&(Posts.name(&1)))
+    names = Settings.languages() |> Enum.map(&Posts.name(&1))
     ensure_caller(pid, names, posts[language], state)
   end
 
@@ -160,15 +168,16 @@ defmodule Blogit.Server do
 
   defp ensure_caller(pid, accepted_modules, reply, state) do
     possible_pids = accepted_modules |> Enum.map(&Process.whereis/1)
+
     if Enum.member?(possible_pids, pid) do
       {:reply, reply, state}
     else
-      possible_pids =
-        possible_pids |> Enum.map(&Kernel.inspect/1) |> Enum.join(" or ")
+      possible_pids = possible_pids |> Enum.map(&Kernel.inspect/1) |> Enum.join(" or ")
+
       {
         :stop,
         "This callback can only be invoked by " <>
-        "#{possible_pids} but was invoked by #{inspect pid}",
+          "#{possible_pids} but was invoked by #{inspect(pid)}",
         state
       }
     end
@@ -188,31 +197,37 @@ defmodule Blogit.Server do
     configurations = Configuration.from_file(repository_provider)
 
     %__MODULE__{
-      repository: repository, posts: posts, configurations: configurations
+      repository: repository,
+      posts: posts,
+      configurations: configurations
     }
   end
 
   defp try_check_after_interval(false, _), do: nil
+
   defp try_check_after_interval(true, interval) do
     Process.send_after(self(), :check_updates, interval)
   end
 
   defp setup_components do
     languages = Settings.languages()
-    components = languages |> Enum.reduce([], fn language, current ->
-      module = Blogit.Components.Configuration
-      [
-        {module, language},
-        {Posts, language},
-        {PostsByDate, language},
-        {Metas, language}
-        | current
-      ]
-    end)
+    configured_components = Application.get_env(:blogit, :components, [
+      Blogit.Components.Configuration,
+      Blogit.Components.Posts,
+      Blogit.Components.PostsByDate,
+      Blogit.Components.Metas
+    ])
 
-    components |> Enum.each(fn (component) ->
-      {:ok, _} =
-        Supervisor.start_child(ComponentsSupervisor, supervisor_spec(component))
+    components =
+      languages
+      |> Enum.reduce([], fn language, current ->
+        [Enum.map(configured_components, &({&1, language})) | current]
+      end)
+      |> List.flatten()
+
+    components
+    |> Enum.each(fn component ->
+      {:ok, _} = Supervisor.start_child(ComponentsSupervisor, supervisor_spec(component))
     end)
   end
 end

@@ -11,10 +11,14 @@ defmodule Blogit.Components.ConfigurationTest do
     refute is_nil(configuration)
 
     assert configuration == %Blogit.Models.Configuration{
-      background_image_path: nil, language: "bg",
-      logo_path: nil, social: %{"rss" => true, "stars_for_blogit" => true},
-      styles_path: nil, sub_title: nil, title: "Memory"
-    }
+             background_image_path: nil,
+             language: "bg",
+             logo_path: nil,
+             social: %{"rss" => true, "stars_for_blogit" => true},
+             styles_path: nil,
+             sub_title: nil,
+             title: "Memory"
+           }
   end
 
   test "cast `{:update, configuration}`, overides the state", %{pid: pid} do
@@ -29,9 +33,13 @@ defmodule Blogit.Components.ConfigurationTest do
     configuration = GenServer.call(pid, :get)
 
     assert configuration == %Blogit.Models.Configuration{
-      background_image_path: nil, language: "bg",
-      logo_path: nil, social: %{"rss" => true, "stars_for_blogit" => true},
-      styles_path: nil, sub_title: nil, title: "Memory"
-    }
+             background_image_path: nil,
+             language: "bg",
+             logo_path: nil,
+             social: %{"rss" => true, "stars_for_blogit" => true},
+             styles_path: nil,
+             sub_title: nil,
+             title: "Memory"
+           }
   end
 end

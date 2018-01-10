@@ -50,17 +50,19 @@ defmodule Blogit.Components.Metas do
 
   def handle_call(:list_pinned, _from, %{metas: metas, language: lang}) do
     post_metas = get(metas, lang)
-    result = post_metas
-             |> Enum.filter(&(&1.pinned))
-             |> Meta.sorted(:updated_at)
-             |> Enum.map(fn meta -> {meta.name, meta.title} end)
+
+    result =
+      post_metas
+      |> Enum.filter(& &1.pinned)
+      |> Meta.sorted(:updated_at)
+      |> Enum.map(fn meta -> {meta.name, meta.title} end)
 
     {:reply, result, %{language: lang, metas: post_metas}}
   end
 
   defp get(nil, language) do
     posts = GenServer.call(Posts.name(language), :all)
-    posts |> Enum.map(&(&1.meta)) |> Meta.sorted()
+    posts |> Enum.map(& &1.meta) |> Meta.sorted()
   end
 
   defp get(metas, _), do: metas

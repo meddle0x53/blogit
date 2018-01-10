@@ -20,15 +20,36 @@ defmodule Blogit.Models.Post.Meta do
   import Blogit.Settings
 
   @type t :: %__MODULE__{
-    author: String.t, title: String.t, category: String.t, published: boolean,
-    tags: [String.t], title_image_path: String.t, pinned: boolean,
-    year: String.t, month: String.t, language: String.t, preview: String.t,
-    name: String.t,
-    created_at: Calendar::NaiveDateTime.t, updated_at: Calendar::NaiveDateTime.t
-  }
+          author: String.t(),
+          title: String.t(),
+          category: String.t(),
+          published: boolean,
+          tags: [String.t()],
+          title_image_path: String.t(),
+          pinned: boolean,
+          year: String.t(),
+          month: String.t(),
+          language: String.t(),
+          preview: String.t(),
+          name: String.t(),
+          created_at: Calendar :: NaiveDateTime.t(),
+          updated_at: Calendar :: NaiveDateTime.t()
+        }
   defstruct [
-    :created_at, :updated_at, :author, :title, :category, :tags, :published,
-    :title_image_path, :pinned, :year, :month, :language, :preview, :name
+    :created_at,
+    :updated_at,
+    :author,
+    :title,
+    :category,
+    :tags,
+    :published,
+    :title_image_path,
+    :pinned,
+    :year,
+    :month,
+    :language,
+    :preview,
+    :name
   ]
 
   @doc """
@@ -40,7 +61,7 @@ defmodule Blogit.Models.Post.Meta do
   should be an YAML string containing the meta-data and the second the post's
   raw content.
   """
-  @spec from_file(String.t, Repository.t, [String.t], String.t, String.t) :: t
+  @spec from_file(String.t(), Repository.t(), [String.t()], String.t(), String.t()) :: t
   def from_file(file_path, repository, raw_data, name, language) do
     raw_meta = List.first(raw_data)
     raw = List.last(raw_data)
@@ -78,9 +99,10 @@ defmodule Blogit.Models.Post.Meta do
   """
   @spec sorted([t], atom) :: [t]
   def sorted(metas, field \\ :created_at) do
-    Enum.sort(metas, fn (meta1, meta2) ->
+    Enum.sort(metas, fn meta1, meta2 ->
       Calendar.NaiveDateTime.before?(
-        Map.get(meta2, field), Map.get(meta1, field)
+        Map.get(meta2, field),
+        Map.get(meta1, field)
       )
     end)
   end
@@ -92,9 +114,8 @@ defmodule Blogit.Models.Post.Meta do
   defp merge_with_inline(raw_meta) when is_nil(raw_meta), do: %{}
   defp merge_with_inline(raw_meta), do: YamlElixir.read_from_string(raw_meta)
 
-  defp create_from_map(
-    data, file_path, repository, %{raw: raw, name: name, language: language}
-  ) when is_map(data) do
+  defp create_from_map(data, file_path, repository, %{raw: raw, name: name, language: language})
+       when is_map(data) do
     path = Path.join(posts_folder(), file_path)
     file_info = repository.provider.file_info(repository.repo, path)
 
@@ -107,24 +128,31 @@ defmodule Blogit.Models.Post.Meta do
     {:ok, updated_at, _} = Parse.iso8601(updated_at)
 
     index = nth_index_of(raw, 0, 0, max_lines_in_preview())
-    {:ok, preview, _} = raw
-                        |> String.split_at(index)
-                        |> elem(0)
-                        |> String.replace(~r/^\s*\#\s*.+/, "")
-                        |> Kernel.<>(find_all_references(raw))
-                        |> Earmark.as_html()
+
+    {:ok, preview, _} =
+      raw
+      |> String.split_at(index)
+      |> elem(0)
+      |> String.replace(~r/^\s*\#\s*.+/, "")
+      |> Kernel.<>(find_all_references(raw))
+      |> Earmark.as_html()
 
     tags = Map.get(data, "tags", [])
 
     %__MODULE__{
-      created_at: created_at, updated_at: updated_at, author: author,
+      created_at: created_at,
+      updated_at: updated_at,
+      author: author,
       title: data["title"] || retrieve_title(raw, name),
       tags: tags |> Enum.map(&Kernel.to_string/1),
-      published: Map.get(data, "published", true), name: name,
-      category: data["category"], year: Integer.to_string(created_at.year),
+      published: Map.get(data, "published", true),
+      name: name,
+      category: data["category"],
+      year: Integer.to_string(created_at.year),
       month: Integer.to_string(created_at.month),
       title_image_path: data["title_image_path"],
-      pinned: data["pinned"] || false, preview: preview,
+      pinned: data["pinned"] || false,
+      preview: preview,
       language: language || default_language()
     }
   end
@@ -133,14 +161,14 @@ defmodule Blogit.Models.Post.Meta do
     create_from_map(%{}, file_path, repository, post_data)
   end
 
-  defp nth_index_of(<<  >>, index, _, _), do: index
-  defp nth_index_of(<< "\n", _::binary >>, index, n, n), do: index
+  defp nth_index_of(<<>>, index, _, _), do: index
+  defp nth_index_of(<<"\n", _::binary>>, index, n, n), do: index
 
-  defp nth_index_of(<< "\n", rest::binary >>, index, current, n) do
+  defp nth_index_of(<<"\n", rest::binary>>, index, current, n) do
     nth_index_of(rest, index + 1, current + 1, n)
   end
 
-  defp nth_index_of(<< _::utf8, rest::binary >>, index, current, n) do
+  defp nth_index_of(<<_::utf8, rest::binary>>, index, current, n) do
     nth_index_of(rest, index + 1, current, n)
   end
 
@@ -149,9 +177,11 @@ defmodule Blogit.Models.Post.Meta do
   end
 
   defp guess_title(%{"title" => title}, _), do: title
+
   defp guess_title(_, name) do
     name
-    |> String.split(~r{[^A-Za-z0-9]}) |> Enum.map(&String.capitalize/1)
+    |> String.split(~r{[^A-Za-z0-9]})
+    |> Enum.map(&String.capitalize/1)
     |> Enum.join(" ")
   end
 
@@ -159,8 +189,8 @@ defmodule Blogit.Models.Post.Meta do
   defp find_all_references(raw) do
     @references_regex
     |> Regex.scan(raw, capture: :all)
-    |> Enum.map(fn match -> match |> List.first |> String.trim end)
-    |> Enum.uniq
+    |> Enum.map(fn match -> match |> List.first() |> String.trim() end)
+    |> Enum.uniq()
     |> Enum.reduce("", fn reference, references ->
       references <> "\n" <> reference
     end)

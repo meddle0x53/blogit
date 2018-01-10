@@ -14,33 +14,34 @@ defmodule Blogit.Components.MetasTest do
     assert is_nil(metas)
   end
 
-  test "`metas` state is calculated on the first `{:list, from, size}` call",
-  %{pid: pid} do
+  test "`metas` state is calculated on the first `{:list, from, size}` call", %{pid: pid} do
     metas = GenServer.call(pid, {:list, 1, 2})
 
     refute is_nil(metas)
-    assert metas |> Enum.map(&(&1.name)) == ~w(plug otp)
+    assert metas |> Enum.map(& &1.name) == ~w(plug otp)
   end
 
   test "`{:list, 0, :initially}` returns all the meta data", %{pid: pid} do
     metas = GenServer.call(pid, {:list, 0, :infinity})
 
     refute is_nil(metas)
-    assert metas |> Enum.map(&(&1.name)) == ~w(
+    assert metas |> Enum.map(& &1.name) == ~w(
       processes plug otp nodes modules_functions_recursion mix
       control_flow_and_errors
     )
   end
 
   test "the `metas` state is calculated on the first `:list_pinned` call" <>
-  " and the pinned post's meta is returned", %{pid: pid} do
+         " and the pinned post's meta is returned",
+       %{pid: pid} do
     metas = GenServer.call(pid, :list_pinned)
 
     refute is_nil(metas)
+
     assert metas == [
-      {"modules_functions_recursion", "Модули, функции и рекурсия"},
-      {"nodes", "Title"}
-    ]
+             {"modules_functions_recursion", "Модули, функции и рекурсия"},
+             {"nodes", "Title"}
+           ]
   end
 
   test "a `:reset` cast, sets the `metas` state to nil", %{pid: pid} do

@@ -51,10 +51,10 @@ defmodule Blogit.Components.Supervisor do
       iex> elem(:sys.get_state(pid), 2) # strategy
       :one_for_one
   """
-  @spec start_link() :: Supervisor.on_start
+  @spec start_link() :: Supervisor.on_start()
   def start_link do
     Supervisor.start_link(__MODULE__, nil, name: __MODULE__)
   end
 
-  def init(_), do: supervise([], [strategy: :one_for_one])
+  def init(_), do: supervise([], strategy: :one_for_one)
 end

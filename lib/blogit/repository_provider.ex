@@ -32,15 +32,15 @@ defmodule Blogit.RepositoryProvider do
 
   @type repository :: term
   @type provider :: module
-  @type fetch_result :: {:no_updates} | {:updates, [String.t]}
-  @type timestamp :: String.t
+  @type fetch_result :: {:no_updates} | {:updates, [String.t()]}
+  @type timestamp :: String.t()
 
-  @type file_path :: String.t
-  @type folder :: String.t
-  @type file_read_result :: {:ok, binary} | {:error, File.posix}
+  @type file_path :: String.t()
+  @type folder :: String.t()
+  @type file_read_result :: {:ok, binary} | {:error, File.posix()}
 
   @type t :: %__MODULE__{repo: repository, provider: provider}
-  @enforce_keys(:provider)
+  @enforce_keys :provider
   defstruct [:repo, :provider]
 
   @doc """
@@ -73,7 +73,7 @@ defmodule Blogit.RepositoryProvider do
   Invoked to get the path to the locally downloaded data. If the repository
   is remote, it should have local copy or something like that.
   """
-  @callback local_path() :: String.t
+  @callback local_path() :: String.t()
 
   @doc """
   Invoked to get a list of file paths of set of files contained in the locally
@@ -98,7 +98,7 @@ defmodule Blogit.RepositoryProvider do
   }
   ```
   """
-  @callback file_info(repository, file_path) :: %{atom => String.t | timestamp}
+  @callback file_info(repository, file_path) :: %{atom => String.t() | timestamp}
 
   @doc """
   Invoked in order to read the contents of the file located at the given

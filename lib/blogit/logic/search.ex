@@ -11,8 +11,8 @@ defmodule Blogit.Logic.Search do
 
   @supported_params ~w(author category tags year month q)
 
-  @type search_value :: String.t
-  @type posts :: [Blogit.Models.Post.t]
+  @type search_value :: String.t()
+  @type posts :: [Blogit.Models.Post.t()]
 
   @doc """
   Filters a list of `Blogit.Models.Post` structs using a map of meta fields
@@ -143,16 +143,18 @@ defmodule Blogit.Logic.Search do
       iex> filtered |> Enum.map(fn (post) -> post.name end)
       []
   """
-  @spec filter_by_params(posts, %{String.t => search_value}) :: posts
+  @spec filter_by_params(posts, %{String.t() => search_value}) :: posts
   def filter_by_params(posts, params) do
     filters = Map.take(params, @supported_params)
-    filters = for {key, val} <- filters, into: %{} do
-      {String.to_atom(key), val}
-    end
+
+    filters =
+      for {key, val} <- filters, into: %{} do
+        {String.to_atom(key), val}
+      end
 
     filters = filter_category(filters)
-    tagless_filters = Map.delete filters, :tags
-    no_search_filters = Map.delete tagless_filters, :q
+    tagless_filters = Map.delete(filters, :tags)
+    no_search_filters = Map.delete(tagless_filters, :q)
 
     posts
     |> all_by(no_search_filters, [:meta])
@@ -167,31 +169,35 @@ defmodule Blogit.Logic.Search do
   defp search_posts(posts, query) do
     queries = query_to_list(query)
 
-    posts |> Enum.filter(fn (post) ->
-      Enum.any?(queries, fn (q) ->
+    posts
+    |> Enum.filter(fn post ->
+      Enum.any?(queries, fn q ->
         String.contains?(post.raw, q) || String.contains?(post.meta.title, q)
       end)
     end)
   end
 
   defp all_by(posts, params, deep) do
-    Enum.filter posts, fn entry ->
+    Enum.filter(posts, fn entry ->
       Enum.all?(params, fn {key, val} ->
         deep_check_equal(deep, entry, key, val)
       end)
-    end
+    end)
   end
 
   defp deep_check_equal(deep, entry, key, val) do
-    data = Enum.reduce(deep, entry, fn (current, acc) ->
-      Map.fetch!(acc, current)
-    end)
+    data =
+      Enum.reduce(deep, entry, fn current, acc ->
+        Map.fetch!(acc, current)
+      end)
+
     Map.get(data, key) == val
   end
 
   defp filter_category(%{category: "uncategorized"} = filters) do
     %{filters | category: nil}
   end
+
   defp filter_category(filters), do: filters
 
   defp filter_tags(posts, %{tags: tags}) do
@@ -208,32 +214,39 @@ defmodule Blogit.Logic.Search do
   defp filter_search(posts, _), do: posts
 
   defp filter_by_tags(tags, posts) do
-    tag_set = tags
-              |> String.split(",", trim: true)
-              |> Enum.map(&String.trim/1)
-              |> Enum.into(MapSet.new)
+    tag_set =
+      tags
+      |> String.split(",", trim: true)
+      |> Enum.map(&String.trim/1)
+      |> Enum.into(MapSet.new())
 
-    Enum.filter(posts, fn (post) ->
-      MapSet.subset?(tag_set, post.meta.tags |> Enum.into(MapSet.new))
+    Enum.filter(posts, fn post ->
+      MapSet.subset?(tag_set, post.meta.tags |> Enum.into(MapSet.new()))
     end)
   end
 
   defp query_to_list(query) do
     query
-    |> String.graphemes
-    |> Enum.reduce(%{lead: " ", data: [], temp: []},
-      fn (grapheme, current = %{temp: temp, lead: lead, data: data}) ->
-        cond do
-          grapheme == lead && !Enum.empty?(temp) ->
-            %{temp: [], lead: lead, data: data ++ [temp]}
-          Enum.empty?(temp) && (grapheme == " " || grapheme == ~s("))  ->
-            %{current | lead: grapheme}
-          (grapheme == " " && lead == ~s(")) || grapheme != " " ->
-            %{current | temp: [grapheme | temp]}
-        end
-      end)
+    |> String.graphemes()
+    |> Enum.reduce(%{lead: " ", data: [], temp: []}, fn grapheme,
+                                                        current = %{
+                                                          temp: temp,
+                                                          lead: lead,
+                                                          data: data
+                                                        } ->
+      cond do
+        grapheme == lead && !Enum.empty?(temp) ->
+          %{temp: [], lead: lead, data: data ++ [temp]}
+
+        Enum.empty?(temp) && (grapheme == " " || grapheme == ~s(")) ->
+          %{current | lead: grapheme}
+
+        (grapheme == " " && lead == ~s(")) || grapheme != " " ->
+          %{current | temp: [grapheme | temp]}
+      end
+    end)
     |> data_map_to_list
-    |> Enum.map(fn (list) -> list |> Enum.reverse |> Enum.join("") end)
+    |> Enum.map(fn list -> list |> Enum.reverse() |> Enum.join("") end)
   end
 
   defp data_map_to_list(%{data: data, temp: temp}) do

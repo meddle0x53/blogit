@@ -55,8 +55,10 @@ defmodule Blogit do
   import Blogit.Settings
 
   @repository_provider Application.get_env(
-    :blogit, :repository_provider, Blogit.RepositoryProviders.Git
-  )
+                         :blogit,
+                         :repository_provider,
+                         Blogit.RepositoryProviders.Git
+                       )
 
   @default_from_posts 0
   @default_size_posts :infinity
@@ -104,7 +106,7 @@ defmodule Blogit do
   posts = Blogit.list_posts(from: 5, size: 10, language: "es")
   ```
   """
-  @spec list_posts(keyword) :: [Post.Meta.t]
+  @spec list_posts(keyword) :: [Post.Meta.t()]
   def list_posts(options \\ []) do
     {from, size, language} = read_options(options)
     GenServer.call(Metas.name(language), {:list, from, size})
@@ -129,7 +131,7 @@ defmodule Blogit do
   It defaults to the default language (the first one in the configured `languages` list).
   Pinned post tuples for the given `language` will be returned.
   """
-  @spec list_pinned(keyword) :: [{String.t, String.t}]
+  @spec list_pinned(keyword) :: [{String.t(), String.t()}]
   def list_pinned(options \\ []) do
     name = Metas.name(options[:language] || default_language())
     GenServer.call(name, :list_pinned)
@@ -166,8 +168,8 @@ defmodule Blogit do
   used as the source of the posts to be returned.
   By default posts of the default language will be returned.
   """
-  @type filters :: %{String.t => Search.search_value}
-  @spec filter_posts(filters, keyword) :: [Post.t]
+  @type filters :: %{String.t() => Search.search_value()}
+  @spec filter_posts(filters, keyword) :: [Post.t()]
   def filter_posts(params, options \\ []) do
     {from, size, language} = read_options(options)
     GenServer.call(Posts.name(language), {:filter, params, from, size})
@@ -189,7 +191,7 @@ defmodule Blogit do
 
   For more information see `Blogit.Models.Post.collect_by_year_and_month/1`.
   """
-  @spec posts_by_dates(keyword) :: Post.year_month_count_result
+  @spec posts_by_dates(keyword) :: Post.year_month_count_result()
   def posts_by_dates(options \\ []) do
     id = PostsByDate.name(options[:language] || default_language())
     GenServer.call(id, :get)
@@ -211,7 +213,7 @@ defmodule Blogit do
   It defaults to the default language (the first one in the configured `languages` list).
   Post with the given `name` in the given `language` will be returned if found.
   """
-  @spec post_by_name(atom, keyword) :: {:ok, Post.t} | {:error, String.t}
+  @spec post_by_name(atom, keyword) :: {:ok, Post.t()} | {:error, String.t()}
   def post_by_name(name, options \\ []) do
     {_, _, language} = read_options(options)
     GenServer.call(Posts.name(language), {:by_name, name})
@@ -229,7 +231,7 @@ defmodule Blogit do
   It defaults to the default language (the first one in the configured `languages` list).
   Configuration for the given `language` will be returned.
   """
-  @spec configuration(keyword) :: Blogit.Models.Configuration.t
+  @spec configuration(keyword) :: Blogit.Models.Configuration.t()
   def configuration(options \\ []) do
     name = Configuration.name(options[:language] || default_language())
     GenServer.call(name, :get)

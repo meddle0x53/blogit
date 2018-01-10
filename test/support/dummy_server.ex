@@ -26,14 +26,15 @@ defmodule DummyServer do
   def setup_configuration do
     Fixtures.setup()
 
-    {:ok, pid} =
-      Configuration.start_link(Settings.default_language(), DummyServer)
+    {:ok, pid} = Configuration.start_link(Settings.default_language(), DummyServer)
     pid
   end
 
   defp start_posts do
     case Posts.start_link(Settings.default_language(), DummyServer) do
-      {:ok, pid} -> pid
+      {:ok, pid} ->
+        pid
+
       {:error, _} ->
         Process.sleep(100)
         start_posts()

@@ -2,8 +2,7 @@ defmodule Blogit.RepositoryProviders.Git do
   @moduledoc """
   This module implements the `Blogit.RepositoryProvider` behaviour.
 
-  It provides access to a git repository which could contain posts as markdown
-  files and blog configuration and styles.
+  It provides access to a git repository.
 
   If the git repository is not accessible in the moment the locally checked one
   will be used and won't be updated.
@@ -11,14 +10,9 @@ defmodule Blogit.RepositoryProviders.Git do
   The URL to the git repository have to be specified using the `:blogit` setting
   `:repository_url` in the configuration.
 
-  The main folder containing the posts should be in the root of the repository.
-  Uts name should be *posts*.
-
-  For the author of a post markdown file
-  (if not specified manually in the meta data) is used the creator of the file
-  in the git repository. For creation date is used the date of the first
-  commit of the file and for the last update date is used the date of the last
-  commit of the file.
+  For the author of a file is used the creator of the file in the git repository.
+  For creation date is used the date of the first commit of the file and
+  for the last update date is used the date of the last commit of the file.
 
   The `Blogit.RepositoryProvider.repository/0` implementation does
   `git pull` before returning the repository representation. The
@@ -35,7 +29,7 @@ defmodule Blogit.RepositoryProviders.Git do
   @repository_url Application.get_env(:blogit, :repository_url)
   @local_path @repository_url
               |> String.split("/")
-              |> List.last
+              |> List.last()
               |> String.trim_trailing(".git")
 
   #############
@@ -44,12 +38,13 @@ defmodule Blogit.RepositoryProviders.Git do
 
   def repository do
     repo = git_repository()
+
     case Git.pull(repo) do
-      {:ok, msg} -> Logger.info("Pulling from git repository #{msg}")
+      {:ok, msg} ->
+        Logger.info("Pulling from git repository #{msg}")
+
       {_, error} ->
-        Logger.error(
-          "Error while pulling from git repository #{inspect(error)}"
-        )
+        Logger.error("Error while pulling from git repository #{inspect(error)}")
     end
 
     repo
@@ -57,14 +52,20 @@ defmodule Blogit.RepositoryProviders.Git do
 
   def fetch(repo) do
     Logger.info("Fetching data from #{@repository_url}")
+
     case Git.fetch(repo) do
-      {:error, _} -> {:no_updates}
-      {:ok, ""} -> {:no_updates}
+      {:error, _} ->
+        {:no_updates}
+
+      {:ok, ""} ->
+        {:no_updates}
+
       {:ok, _} ->
         updates =
           repo
           |> Git.diff!(["--name-only", "HEAD", "origin/master"])
-          |> String.split("\n", trim: true) |> Enum.map(&String.trim/1)
+          |> String.split("\n", trim: true)
+          |> Enum.map(&String.trim/1)
 
         Logger.info("There are new updates, pulling them.")
         Git.pull!(repo)
@@ -81,7 +82,7 @@ defmodule Blogit.RepositoryProviders.Git do
 
     path
     |> recursive_ls()
-    |> Enum.map(fn << _::binary-size(size), rest::binary >> -> rest end)
+    |> Enum.map(fn <<_::binary-size(size), rest::binary>> -> rest end)
   end
 
   def file_in?(file), do: File.exists?(Path.join(@local_path, file))
@@ -95,7 +96,7 @@ defmodule Blogit.RepositoryProviders.Git do
   end
 
   def read_file(file_path, folder \\ "") do
-    local_path() |> Path.join(folder) |> Path.join(file_path) |> File.read
+    local_path() |> Path.join(folder) |> Path.join(file_path) |> File.read()
   end
 
   ###########
@@ -105,24 +106,29 @@ defmodule Blogit.RepositoryProviders.Git do
   defp log(repository, args), do: Git.log!(repository, args)
 
   defp first_in_log(repository, args) do
-    repository |> log(args) |> String.split("\n") |> List.first |> String.trim
+    repository |> log(args) |> String.split("\n") |> List.first() |> String.trim()
   end
 
   defp recursive_ls(path) do
     cond do
-      File.regular?(path) -> [path]
+      File.regular?(path) ->
+        [path]
+
       File.dir?(path) ->
         path
         |> File.ls!()
         |> Enum.map(&Path.join(path, &1))
         |> Enum.map(&recursive_ls/1)
         |> Enum.concat()
-      true -> []
+
+      true ->
+        []
     end
   end
 
   defp git_repository do
     Logger.info("Clonning repository #{@repository_url}")
+
     case Git.clone(@repository_url) do
       {:ok, repo} -> repo
       {:error, %Git.Error{code: 128}} -> Git.new(@local_path)
@@ -141,7 +147,7 @@ defmodule Blogit.RepositoryProviders.Git do
   end
 
   defp file_updated_at(repository, file_name) do
-    case repository |> log(["-1", "--format=%ci", file_name]) |> String.trim do
+    case repository |> log(["-1", "--format=%ci", file_name]) |> String.trim() do
       "" -> DateTime.to_iso8601(DateTime.utc_now())
       updated_at -> updated_at
     end

@@ -31,7 +31,7 @@ defmodule Blogit.Server do
   alias Blogit.Models.Post
   alias Blogit.Models.Configuration
 
-  alias Blogit.Components.{Posts, PostsByDate}
+  alias Blogit.Components.{Posts, PostsByDate, Metas}
   alias Blogit.Components.Supervisor, as: ComponentsSupervisor
 
   alias Blogit.RepositoryProvider, as: Repository
@@ -133,6 +133,7 @@ defmodule Blogit.Server do
       )
 
       GenServer.cast(PostsByDate.name(configuration.language), :reset)
+      GenServer.cast(Metas.name(configuration.language), :reset)
     end)
 
     {:noreply, %{state | posts: posts, configurations: configurations}}

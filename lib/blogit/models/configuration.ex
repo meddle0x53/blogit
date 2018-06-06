@@ -131,10 +131,11 @@ defmodule Blogit.Models.Configuration do
   defp from_path({:ok, data}, repository_provider) do
     defaults = from_defaults(repository_provider)
 
-    try do
-      from_yml(YamlElixir.read_from_string(data), defaults)
-    rescue
-      _ -> default_result(defaults)
+    case YamlElixir.read_from_string(data) do
+      {:ok, conf} ->
+        from_yml(conf, defaults)
+      _ ->
+        default_result(defaults)
     end
   end
 

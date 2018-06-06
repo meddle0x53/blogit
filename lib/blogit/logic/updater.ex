@@ -11,6 +11,8 @@ defmodule Blogit.Logic.Updater do
   alias Blogit.Models.Post
   alias Blogit.Models.Configuration
 
+  require Logger
+
   @type check_updates_result ::
           :no_updates
           | {:updates, %{
@@ -55,6 +57,8 @@ defmodule Blogit.Logic.Updater do
         Configuration.updated?(updates),
         state.repository.provider
       )
+
+    Logger.info("Updating the posts for configurations #{inspect(configurations)}")
 
     {:updates, %{posts: posts, configurations: configurations}}
   end

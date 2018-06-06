@@ -40,8 +40,8 @@ defmodule Blogit.Components.Posts do
     {:noreply, %{language: language, posts: posts_provider.get_posts(language)}}
   end
 
-  def handle_cast({:update, new_posts}, state) do
-    {:noreply, %{state | posts: new_posts}}
+  def handle_call({:update, new_posts}, _, state) do
+    {:reply, :ok, %{state | posts: new_posts}}
   end
 
   def handle_call(:all, _from, %{posts: posts} = state) do

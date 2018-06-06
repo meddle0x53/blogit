@@ -112,7 +112,10 @@ defmodule Blogit.Models.Post.Meta do
   ###########
 
   defp merge_with_inline(raw_meta) when is_nil(raw_meta), do: %{}
-  defp merge_with_inline(raw_meta), do: YamlElixir.read_from_string(raw_meta)
+  defp merge_with_inline(raw_meta) do
+    {:ok, meta} = YamlElixir.read_from_string(raw_meta)
+    meta
+  end
 
   defp create_from_map(data, file_path, repository, %{raw: raw, name: name, language: language})
        when is_map(data) do

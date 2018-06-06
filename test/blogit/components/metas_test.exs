@@ -1,5 +1,5 @@
 defmodule Blogit.Components.MetasTest do
-  alias Blogit.Components.Metas
+  alias Blogit.Components.{Metas, Posts}
   use ComponentTestCase, setup_posts: true, module: Metas
 
   setup do
@@ -54,5 +54,17 @@ defmodule Blogit.Components.MetasTest do
 
     assert language == Settings.default_language()
     assert is_nil(metas)
+
+    new_post = %Blogit.Models.Post{
+      name: "One", raw: "", html: "",
+      meta: %Blogit.Models.Post.Meta{
+        name: "One"
+      }
+    }
+    :ok = GenServer.call(Posts.name(language), {:update, %{one: new_post}})
+    metas = GenServer.call(pid, {:list, 0, 2})
+
+    refute is_nil(metas)
+    assert metas |> Enum.map(& &1.name) == ~w(One)
   end
 end

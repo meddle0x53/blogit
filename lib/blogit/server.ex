@@ -127,7 +127,7 @@ defmodule Blogit.Server do
       name = Blogit.Components.Configuration.name(configuration.language)
       GenServer.cast(name, {:update, configuration})
 
-      GenServer.cast(
+      :ok = GenServer.call(
         Posts.name(configuration.language),
         {:update, posts[configuration.language]}
       )

@@ -1,7 +1,7 @@
 defmodule Blogit.Mixfile do
   use Mix.Project
 
-  @version "1.2.1"
+  @version "1.2.2"
 
   def project do
     [
@@ -34,8 +34,8 @@ defmodule Blogit.Mixfile do
   defp deps do
     [
       {:git_cli, "~> 0.2"},
-      {:earmark, "~> 1.1"},
-      {:yaml_elixir, "~> 1.3.0"},
+      {:earmark, "~> 1.2"},
+      {:yaml_elixir, "~> 2.1"},
       {:calendar, "~> 0.17.3"},
       {:ex_doc, ">= 0.15.0", only: :dev},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false}

@@ -29,7 +29,7 @@ defmodule Blogit.Components.PostsTest do
   end
 
   test "cast `{:update, map-of-posts}`, overides the posts", %{pid: pid} do
-    GenServer.cast(pid, {:update, %{one: "a-post"}})
+    :ok = GenServer.call(pid, {:update, %{one: "a-post"}})
 
     %{posts: posts} = :sys.get_state(pid)
 

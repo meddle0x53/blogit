@@ -127,9 +127,9 @@ defmodule Blogit.Models.Post.Meta do
     updated_at = data["updated_at"]
     author = data["author"]
     if created_at == nil do
-      IO.inspect "get from REPO using git log"
+      IO.inspect "get from REPO using git log" <> file_path
       file_info = repository.provider.file_info(repository.repo, path)
-      created_at = created_at || file_info[:created_at]
+      created_at = file_info[:created_at] || "2020-01-26T01:01:01"
       updated_at = updated_at || file_info[:updated_at]
       author = author || file_info[:author]
     end

@@ -68,6 +68,7 @@ defmodule Blogit.Models.Post.Meta do
 
     meta = merge_with_inline(raw_meta)
     post_data = %{raw: raw, name: name, language: language}
+
     create_from_map(meta, file_path, repository, post_data)
   end
 
@@ -120,11 +121,22 @@ defmodule Blogit.Models.Post.Meta do
   defp create_from_map(data, file_path, repository, %{raw: raw, name: name, language: language})
        when is_map(data) do
     path = Path.join(posts_folder(), file_path)
-    file_info = repository.provider.file_info(repository.repo, path)
+    
 
-    created_at = data["created_at"] || file_info[:created_at]
-    updated_at = data["updated_at"] || file_info[:updated_at]
-    author = data["author"] || file_info[:author]
+    created_at = data["created_at"]
+    updated_at = data["updated_at"]
+    author = data["author"]
+    if created_at == nil do
+      IO.inspect "get from REPO using git log"
+      file_info = repository.provider.file_info(repository.repo, path)
+      created_at = created_at || file_info[:created_at]
+      updated_at = updated_at || file_info[:updated_at]
+      author = author || file_info[:author]
+    end
+
+    created_at = created_at || "2020-01-26T01:01:01"
+    updated_at = updated_at || created_at
+    author = author || "不可考"
     author = if author == "", do: "Anonymous", else: author
 
     {:ok, created_at, _} = Parse.iso8601(created_at)

@@ -126,17 +126,21 @@ defmodule Blogit.Models.Post.Meta do
     created_at = data["created_at"]
     updated_at = data["updated_at"]
     author = data["author"]
-    if created_at == nil do
-      IO.inspect "get from REPO using git log" <> file_path
-      file_info = repository.provider.file_info(repository.repo, path)
-      created_at = file_info[:created_at] || "2020-01-26T01:01:01"
-      updated_at = updated_at || file_info[:updated_at]
-      author = author || file_info[:author]
-    end
+    {created_at2, updated_at2, author2} =
+      if created_at == nil do
+        IO.inspect "get from REPO using git log:" <> file_path
+        file_info = repository.provider.file_info(repository.repo, path)
+        created_at3 = file_info[:created_at] || "2020-01-26T01:01:01"
+        updated_at3 = updated_at || file_info[:updated_at] || created_at3
+        author3 = author || file_info[:author] || "不可考"
+        {created_at3, updated_at3, author3}
+      else
+        {nil,nil,nil}
+      end
 
-    created_at = created_at || "2020-01-26T01:01:01"
-    updated_at = updated_at || created_at
-    author = author || "不可考"
+    created_at = created_at || created_at2
+    updated_at = updated_at || updated_at2 || created_at
+    author = author || author2 || "不可考"
     author = if author == "", do: "Anonymous", else: author
 
     {:ok, created_at, _} = Parse.iso8601(created_at)

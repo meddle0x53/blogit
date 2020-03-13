@@ -132,7 +132,7 @@ defmodule Blogit.Models.Post.Meta do
         file_info = repository.provider.file_info(repository.repo, path)
         created_at3 = file_info[:created_at] || "2020-01-26T01:01:01"
         updated_at3 = updated_at || file_info[:updated_at] || created_at3
-        author3 = author || file_info[:author] || "不可考"
+        author3 = author || file_info[:author] || "Anonymous"
         {created_at3, updated_at3, author3}
       else
         {nil,nil,nil}
@@ -140,8 +140,8 @@ defmodule Blogit.Models.Post.Meta do
 
     created_at = created_at || created_at2
     updated_at = updated_at || updated_at2 || created_at
-    author = author || author2 || "不可考"
-    author = if author == "", do: "Anonymous", else: author
+    author = author || author2 || "Anonymous"
+    # author = if author == "", do: "Anonymous", else: author
 
     {:ok, created_at, _} = Parse.iso8601(created_at)
     {:ok, updated_at, _} = Parse.iso8601(updated_at)

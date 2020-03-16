@@ -14,6 +14,8 @@ defmodule Blogit.Models.Post.Meta do
   containing the file.
   """
 
+  require Logger
+
   alias Calendar.NaiveDateTime.Parse
   alias Blogit.RepositoryProvider, as: Repository
 
@@ -68,6 +70,7 @@ defmodule Blogit.Models.Post.Meta do
 
     meta = merge_with_inline(raw_meta)
     post_data = %{raw: raw, name: name, language: language}
+
     create_from_map(meta, file_path, repository, post_data)
   end
 
@@ -120,12 +123,28 @@ defmodule Blogit.Models.Post.Meta do
   defp create_from_map(data, file_path, repository, %{raw: raw, name: name, language: language})
        when is_map(data) do
     path = Path.join(posts_folder(), file_path)
-    file_info = repository.provider.file_info(repository.repo, path)
 
-    created_at = data["created_at"] || file_info[:created_at]
-    updated_at = data["updated_at"] || file_info[:updated_at]
-    author = data["author"] || file_info[:author]
-    author = if author == "", do: "Anonymous", else: author
+
+    created_at = data["created_at"]
+    updated_at = data["updated_at"]
+    author = data["author"]
+    {created_at_from_provider, updated_at_from_provider, author_from_provider} =
+      if is_nil(created_at) || is_nil(updated_at) || is_nil(author) do
+        Logger.info("Get meta from REPO using git log: " <> file_path)
+        file_info = repository.provider.file_info(repository.repo, path)
+        {
+          file_info[:created_at] || (DateTime.utc_now() |> DateTime.to_iso8601()),
+          updated_at || file_info[:updated_at] || (DateTime.utc_now() |> DateTime.to_iso8601()),
+          author || file_info[:author] || "Anonymous"
+        }
+      else
+        {nil, nil, nil}
+      end
+
+    created_at = created_at || created_at_from_provider
+    updated_at = updated_at || updated_at_from_provider
+    author = author || author_from_provider
+
 
     {:ok, created_at, _} = Parse.iso8601(created_at)
     {:ok, updated_at, _} = Parse.iso8601(updated_at)

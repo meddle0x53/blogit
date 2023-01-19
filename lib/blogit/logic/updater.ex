@@ -15,10 +15,11 @@ defmodule Blogit.Logic.Updater do
 
   @type check_updates_result ::
           :no_updates
-          | {:updates, %{
-              posts: %{atom => Post.t()},
-              configurations: [Configuration.t()]
-            }}
+          | {:updates,
+             %{
+               posts: %{atom => Post.t()},
+               configurations: [Configuration.t()]
+             }}
 
   @doc """
   Checks for new updates of the state in the remote/local repository.

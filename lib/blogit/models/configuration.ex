@@ -134,6 +134,7 @@ defmodule Blogit.Models.Configuration do
     case YamlElixir.read_from_string(data) do
       {:ok, conf} ->
         from_yml(conf, defaults)
+
       _ ->
         default_result(defaults)
     end

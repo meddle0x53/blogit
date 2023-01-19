@@ -56,11 +56,14 @@ defmodule Blogit.Components.MetasTest do
     assert is_nil(metas)
 
     new_post = %Blogit.Models.Post{
-      name: "One", raw: "", html: "",
+      name: "One",
+      raw: "",
+      html: "",
       meta: %Blogit.Models.Post.Meta{
         name: "One"
       }
     }
+
     :ok = GenServer.call(Posts.name(language), {:update, %{one: new_post}})
     metas = GenServer.call(pid, {:list, 0, 2})
 

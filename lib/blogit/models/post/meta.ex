@@ -115,6 +115,7 @@ defmodule Blogit.Models.Post.Meta do
   ###########
 
   defp merge_with_inline(raw_meta) when is_nil(raw_meta), do: %{}
+
   defp merge_with_inline(raw_meta) do
     {:ok, meta} = YamlElixir.read_from_string(raw_meta)
     meta
@@ -124,17 +125,18 @@ defmodule Blogit.Models.Post.Meta do
        when is_map(data) do
     path = Path.join(posts_folder(), file_path)
 
-
     created_at = data["created_at"]
     updated_at = data["updated_at"]
     author = data["author"]
+
     {created_at_from_provider, updated_at_from_provider, author_from_provider} =
       if is_nil(created_at) || is_nil(updated_at) || is_nil(author) do
         Logger.info("Get meta from REPO using git log: " <> file_path)
         file_info = repository.provider.file_info(repository.repo, path)
+
         {
-          file_info[:created_at] || (DateTime.utc_now() |> DateTime.to_iso8601()),
-          updated_at || file_info[:updated_at] || (DateTime.utc_now() |> DateTime.to_iso8601()),
+          file_info[:created_at] || DateTime.utc_now() |> DateTime.to_iso8601(),
+          updated_at || file_info[:updated_at] || DateTime.utc_now() |> DateTime.to_iso8601(),
           author || file_info[:author] || "Anonymous"
         }
       else
@@ -144,7 +146,6 @@ defmodule Blogit.Models.Post.Meta do
     created_at = created_at || created_at_from_provider
     updated_at = updated_at || updated_at_from_provider
     author = author || author_from_provider
-
 
     {:ok, created_at, _} = Parse.iso8601(created_at)
     {:ok, updated_at, _} = Parse.iso8601(updated_at)

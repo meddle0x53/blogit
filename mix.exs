@@ -28,7 +28,7 @@ defmodule Blogit.Mixfile do
   end
 
   def application do
-    [applications: [:logger, :yaml_elixir], mod: {Blogit, []}]
+    [extra_applications: [:logger]]
   end
 
   defp deps do

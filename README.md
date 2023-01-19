@@ -14,21 +14,13 @@ The [blog](https://blog.elixir-lang.bg) for the Sofia University Elixir course r
 
 It is [available in Hex](https://hex.pm/docs/publish), so the package can be installed:
 
-  1. Add `blogit` to your list of dependencies in `mix.exs`:
+Add `blogit` to your list of dependencies in `mix.exs`:
 
-      ```elixir
-      def deps do
-        [{:blogit, "~> 1.2"}]
-      end
-      ```
-
-  2. Ensure `blogit` is started before your application:
-
-      ```elixir
-      def application do
-        [applications: [:blogit]]
-      end
-      ```
+```elixir
+def deps do
+  [{:blogit, "~> 1.2"}]
+end
+```
 
 ## Configuration
 

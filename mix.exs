@@ -33,12 +33,12 @@ defmodule Blogit.Mixfile do
 
   defp deps do
     [
-      {:git_cli, "~> 0.2"},
-      {:earmark, "~> 1.2"},
-      {:yaml_elixir, "~> 2.1"},
-      {:calendar, "~> 0.17.3"},
-      {:ex_doc, ">= 0.15.0", only: :dev},
-      {:dialyxir, "~> 0.5", only: [:dev], runtime: false}
+      {:git_cli, "~> 0.3.0"},
+      {:earmark, "~> 1.4.34"},
+      {:yaml_elixir, "~> 2.9.0"},
+      {:calendar, "~> 1.0.0"},
+      {:ex_doc, ">= 0.29.1", only: :dev},
+      {:dialyxir, "~> 1.2.0", only: [:dev], runtime: false}
     ]
   end
 

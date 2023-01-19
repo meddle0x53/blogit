@@ -38,23 +38,23 @@ defmodule Blogit.Supervisor do
     Supervisor.start_link(__MODULE__, repository_provider, name: __MODULE__)
   end
 
+  @impl true
   def init(repository_provider) do
     children = [
-      supervisor(Blogit.Components.Supervisor, []),
-      supervisor(Task.Supervisor, [[name: :tasks_supervisor]]),
-      worker(Blogit.Server, [repository_provider])
+      {Blogit.Components.Supervisor, []},
+      {Task.Supervisor, name: :tasks_supervisor},
+      {Blogit.Server, repository_provider}
     ]
 
     children =
       case repository_provider do
         Blogit.RepositoryProviders.Memory ->
-          [worker(repository_provider, []) | children]
+          [{repository_provider, []} | children]
 
         _ ->
           children
       end
 
-    opts = [strategy: :one_for_all]
-    supervise(children, opts)
+    Supervisor.init(children, strategy: :one_for_all)
   end
 end

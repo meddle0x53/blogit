@@ -127,10 +127,11 @@ defmodule Blogit.Server do
       name = Blogit.Components.Configuration.name(configuration.language)
       GenServer.cast(name, {:update, configuration})
 
-      :ok = GenServer.call(
-        Posts.name(configuration.language),
-        {:update, posts[configuration.language]}
-      )
+      :ok =
+        GenServer.call(
+          Posts.name(configuration.language),
+          {:update, posts[configuration.language]}
+        )
 
       GenServer.cast(PostsByDate.name(configuration.language), :reset)
       GenServer.cast(Metas.name(configuration.language), :reset)
@@ -184,12 +185,6 @@ defmodule Blogit.Server do
     end
   end
 
-  defp supervisor_spec({module, name}) do
-    import Supervisor.Spec, warn: false
-
-    worker(module, [name], id: module.name(name))
-  end
-
   defp init_state(repository_provider) do
     repo = repository_provider.repository()
     repository = %Repository{repo: repo, provider: repository_provider}
@@ -212,23 +207,23 @@ defmodule Blogit.Server do
 
   defp setup_components do
     languages = Settings.languages()
-    configured_components = Application.get_env(:blogit, :components, [
-      Blogit.Components.Configuration,
-      Blogit.Components.Posts,
-      Blogit.Components.PostsByDate,
-      Blogit.Components.Metas
-    ])
 
-    components =
-      languages
-      |> Enum.reduce([], fn language, current ->
-        [Enum.map(configured_components, &({&1, language})) | current]
-      end)
-      |> List.flatten()
+    configured_components =
+      Application.get_env(:blogit, :components, [
+        Blogit.Components.Configuration,
+        Blogit.Components.Posts,
+        Blogit.Components.PostsByDate,
+        Blogit.Components.Metas
+      ])
 
-    components
-    |> Enum.each(fn component ->
-      {:ok, _} = Supervisor.start_child(ComponentsSupervisor, supervisor_spec(component))
+    languages
+    |> Enum.reduce([], fn language, current ->
+      [Enum.map(configured_components, &{&1, language}) | current]
+    end)
+    |> List.flatten()
+    |> Enum.each(fn {component, language} ->
+      spec = %{id: component.name(language), start: {component, :start_link, [language]}}
+      {:ok, _} = Supervisor.start_child(ComponentsSupervisor, spec)
     end)
   end
 end

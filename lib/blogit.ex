@@ -54,17 +54,11 @@ defmodule Blogit do
 
   import Blogit.Settings
 
-  @repository_provider Application.get_env(
-                         :blogit,
-                         :repository_provider,
-                         Blogit.RepositoryProviders.Git
-                       )
-
   @default_from_posts 0
   @default_size_posts :infinity
 
   def start(_type, _args) do
-    Blogit.Supervisor.start_link(@repository_provider)
+    Blogit.Supervisor.start_link(repository_provider())
   end
 
   @doc """
@@ -240,6 +234,10 @@ defmodule Blogit do
   ###########
   # Private #
   ###########
+
+  defp repository_provider do
+    Application.get_env(:blogit, :repository_provider, Blogit.RepositoryProviders.Git)
+  end
 
   defp read_options(options) do
     from = Keyword.get(options, :from, @default_from_posts)

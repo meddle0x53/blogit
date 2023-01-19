@@ -26,12 +26,6 @@ defmodule Blogit.RepositoryProviders.Git do
 
   @behaviour Blogit.RepositoryProvider
 
-  @repository_url Application.get_env(:blogit, :repository_url)
-  @local_path @repository_url
-              |> String.split("/")
-              |> List.last()
-              |> String.trim_trailing(".git")
-
   #############
   # Callbacks #
   #############
@@ -51,7 +45,7 @@ defmodule Blogit.RepositoryProviders.Git do
   end
 
   def fetch(repo) do
-    Logger.info("Fetching data from #{@repository_url}")
+    Logger.info("Fetching data from #{repository_url()}")
 
     case Git.fetch(repo) do
       {:error, _} ->
@@ -74,10 +68,15 @@ defmodule Blogit.RepositoryProviders.Git do
     end
   end
 
-  def local_path, do: @local_path
+  def local_path do
+    repository_url()
+    |> String.split("/")
+    |> List.last()
+    |> String.trim_trailing(".git")
+  end
 
   def list_files(folder \\ Settings.posts_folder()) do
-    path = Path.join(@local_path, folder)
+    path = Path.join(local_path(), folder)
     size = byte_size(path) + 1
 
     path
@@ -85,7 +84,7 @@ defmodule Blogit.RepositoryProviders.Git do
     |> Enum.map(fn <<_::binary-size(size), rest::binary>> -> rest end)
   end
 
-  def file_in?(file), do: File.exists?(Path.join(@local_path, file))
+  def file_in?(file), do: File.exists?(Path.join(local_path(), file))
 
   def file_info(repository, file_path) do
     %{
@@ -102,6 +101,8 @@ defmodule Blogit.RepositoryProviders.Git do
   ###########
   # Private #
   ###########
+
+  defp repository_url, do: Application.get_env(:blogit, :repository_url)
 
   defp log(repository, args), do: Git.log!(repository, args)
 
@@ -127,11 +128,11 @@ defmodule Blogit.RepositoryProviders.Git do
   end
 
   defp git_repository do
-    Logger.info("Clonning repository #{@repository_url}")
+    Logger.info("Clonning repository #{repository_url()}")
 
-    case Git.clone(@repository_url) do
+    case Git.clone(repository_url()) do
       {:ok, repo} -> repo
-      {:error, %Git.Error{code: 128}} -> Git.new(@local_path)
+      {:error, %Git.Error{code: 128}} -> Git.new(local_path())
     end
   end
 
